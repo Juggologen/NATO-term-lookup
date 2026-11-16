@@ -32,7 +32,7 @@ searches offline.
 
 | Source | Content | Entries |
 | --- | --- | --- |
-| **AAP-15** — NATO Glossary of Abbreviations used in NATO Documents and Publications | Abbreviation → full form, with the French equivalent | 4,851 with an abbreviation |
+| **AAP-15** — NATO Glossary of Abbreviations used in NATO Documents and Publications | Abbreviation → full form, with the French equivalent | 4,865 with an abbreviation |
 | **AAP-06** — NATO Glossary of Terms and Definitions (2019) | Term → definition | 2,950 entries carry a definition |
 
 Both are published by the NATO Standardization Office. The AAP-15 content is a
