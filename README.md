@@ -1,4 +1,4 @@
-# NATO Lookup
+# NATO Term Lookup
 
 A quick-reference for NATO abbreviations and terms, built to answer two questions fast:
 

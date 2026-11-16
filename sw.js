@@ -1,4 +1,4 @@
-/* NATO Lookup service worker: cache the whole app so it works with no signal. */
+/* NATO Term Lookup service worker: cache the whole app so it works with no signal. */
 var CACHE = 'nato-lookup-v1';
 var ASSETS = [
   './',

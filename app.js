@@ -1,4 +1,4 @@
-/* NATO Lookup - offline abbreviation and term reference.
+/* NATO Term Lookup - offline abbreviation and term reference.
    No dependencies, no network calls beyond this app's own files. */
 (function () {
   'use strict';
