@@ -60,7 +60,7 @@
      two-word term that matches beats a long definition that happens to
      contain several of the query words. */
   var F_TERM = [['t', 3], ['k', 2.6], ['sv', 2.6], ['alt', 2], ['v', 2]];
-  var F_BODY = [['d', 1], ['d2', 1], ['n', 1.2], ['f', 0.8]];
+  var F_BODY = [['d', 1], ['d2', 1], ['n', 1.2]];
 
   var pTerm = Object.create(null);
   var pBody = Object.create(null);
@@ -121,12 +121,17 @@
 
       foldedTerm[i] = fold(e.t || '');
       foldedBody[i] = fold([e.d || '', (e.d2 || []).join(' '), (e.n || []).join(' '),
-                            e.f || '', (e.sv || []).join(' '), (e.k || []).join(' ')].join(' '));
+                            (e.sv || []).join(' '), (e.k || []).join(' ')].join(' '));
 
       var keys = [];
       if (e.a) keys.push(normAbbr(e.a));
       if (e.v) for (var vi = 0; vi < e.v.length; vi++) keys.push(normAbbr(e.v[vi]));
       abbrKeys[i] = keys;
+
+      /* How well attested a sense is: whether it carries a definition and how
+         many publications use it. Breaks ties between senses of the same
+         abbreviation so the one in current use comes first. */
+      prominence[i] = (e.d ? 1 : 0) + (e.p ? e.p.length : 0);
     }
 
     avgBody = Math.max(1, bodyTotal / entries.length);
@@ -176,6 +181,7 @@
   }
 
   var stemMap = Object.create(null);
+  var prominence = [];
 
   function buildStems() {
     for (var i = 0; i < vocab.length; i++) {
@@ -324,6 +330,7 @@
       if (d) return d;
       var la = (entries[a].a || '').length, lb = (entries[b].a || '').length;
       if (la !== lb) return la - lb;
+      if (prominence[b] !== prominence[a]) return prominence[b] - prominence[a];
       return (entries[a].t || '').localeCompare(entries[b].t || '');
     });
 
@@ -375,7 +382,8 @@
     return frag;
   }
 
-  var SRC_LABEL = { 'AAP-15': 'AAP-15', 'AAP-06': 'AAP-06', 'COMMON': 'Common usage' };
+  var SRC_LABEL = { 'AAP-15': 'AAP-15', 'AAP-06': 'AAP-06',
+                    'AJP': 'AJP lexicon', 'COMMON': 'Common usage' };
 
   function card(e, terms) {
     var box = el('article', 'entry');
@@ -414,12 +422,6 @@
       sv.appendChild(highlight(e.sv.join(', '), terms));
       box.appendChild(sv);
     }
-    if (e.f) {
-      var fr = el('p', 'fr');
-      fr.appendChild(highlight('FR  ' + e.f, terms));
-      box.appendChild(fr);
-    }
-
     var meta = el('p', 'meta');
     if (e.alt) meta.appendChild(el('span', 'tag tag-also', 'also: ' + e.alt.join('; ')));
     if (e.v) meta.appendChild(el('span', 'tag tag-also', 'form: ' + e.v.join(', ')));
@@ -428,6 +430,14 @@
     }
     meta.appendChild(el('span', 'tag tag-src' + (e.s === 'COMMON' ? ' tag-common' : ''),
                         SRC_LABEL[e.s] || e.s));
+    if (e.p) {
+      for (var pi = 0; pi < Math.min(e.p.length, 3); pi++) {
+        meta.appendChild(el('span', 'tag tag-pub', e.p[pi]));
+      }
+      if (e.p.length > 3) {
+        meta.appendChild(el('span', 'tag tag-pub', '+' + (e.p.length - 3)));
+      }
+    }
     if (e.y) meta.appendChild(el('span', null, e.y));
     box.appendChild(meta);
     return box;

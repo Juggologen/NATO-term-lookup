@@ -28,34 +28,56 @@ searches offline.
 
 ## What is in the data
 
-`data/terms.json` holds **7,372 entries**, built from two published NATO sources:
+`data/terms.json` holds **8,003 entries** from three published NATO sources.
 
 | Source | Content | Entries |
 | --- | --- | --- |
-| **AAP-15** — NATO Glossary of Abbreviations used in NATO Documents and Publications | Abbreviation → full form, with the French equivalent | 4,865 with an abbreviation |
-| **AAP-06** — NATO Glossary of Terms and Definitions (2019) | Term → definition | 2,950 entries carry a definition |
+| **AAP-15** — NATO Glossary of Abbreviations used in NATO Documents and Publications | Abbreviation → full form | 4,517 |
+| **AAP-06** — NATO Glossary of Terms and Definitions (2019) | Term → definition | 2,507 |
+| **AJP lexicons** — the Lexicon of 32 Allied Joint Publications, current editions | Doctrine abbreviations and terms | 971 |
 
-Both are published by the NATO Standardization Office. The AAP-15 content is a
-NATOTerm extract dated 15 April 2026; AAP-06 ceased publication as a bilingual
-Allied publication in 2022 and the 2019 edition is the last full one, so some
-definitions are older than the abbreviation list.
+5,250 entries carry an abbreviation and 3,186 carry a definition.
+
+The two AAP glossaries are published by the NATO Standardization Office. The
+AAP-15 content is a NATOTerm extract dated 15 April 2026; AAP-06 ceased
+publication as a bilingual Allied publication in 2022, so the 2019 edition is
+the last full one and some definitions are older than the abbreviation list.
+
+**The AJP lexicons matter.** The AAP glossaries do not carry most operational
+planning vocabulary — MAOP, AOD, GAT, JPTL, JTL, NSL, TNL, CPOE and COPD are all
+absent from AAP-15. They live in the lexicons of the Allied Joint Publications,
+which is where this build gets them: 725 abbreviations and 246 terms that appear
+in no AAP glossary. A further 601 AAP entries gained a publication reference,
+shown on the card as tags like `AJP-3.3`, so you can see which doctrine uses a
+term and how widely.
 
 Where an AAP-15 full form matches an AAP-06 term, the definition is attached to
 the abbreviation. 145 deprecated abbreviations are kept as cross-references
 ("use X instead").
+
+When an abbreviation has several meanings, the senses are ordered by how well
+attested they are — whether a definition exists and how many publications use
+it — so `GAT` gives *guidance, apportionment and targeting* before *general air
+traffic*, and `CP` gives *command post* first.
+
+The app is English only. AAP-15 is a bilingual source and entries sorted under
+the French abbreviation are re-keyed to their English abbreviation on build, so
+`GAT` is the headword rather than the French `CAG`.
 
 ### Unofficial additions
 
 Three small layers are **not** NATO terminology. They exist so the search can be
 driven in everyday language, and the app labels them:
 
-- `data/supplementary.json` — 14 abbreviations in common use that the official
-  extracts do not contain (NOTAM, IFF, UAV, PSYOPS, LNO and similar). Shown with
-  a **Common usage** tag.
-- `data/sv-keywords.json` — Swedish terms for 119 entries, shown on the card as
+- `data/supplementary.json` — abbreviations in common use that none of the
+  official sources contain (NOTAM, UAV, WARNO and similar). Shown with a
+  **Common usage** tag. Entries here are dropped automatically if a source
+  later covers them, which is what happened to IFF, LNO, LOGREP, PSYOPS,
+  STRATCOM and UAS once the AJP lexicons were added — 8 remain.
+- `data/sv-keywords.json` — Swedish terms for 128 entries, shown on the card as
   `SV`. A search aid, not a translation authority.
 - `data/aliases.json` — plain-language English phrases ("roadside bomb" → IED)
-  for 83 entries. Used for searching only; not displayed.
+  for 93 entries. Used for searching only; not displayed.
 
 All three are plain JSON and are meant to be extended — see below.
 
@@ -95,7 +117,8 @@ and *sjoraddning* both match.
 After editing, rebuild `data/terms.json`:
 
 ```bash
-python3 tools/build_data.py parsed/aap15.json parsed/aap06.json data/terms.json data/sv-keywords.json data/supplementary.json data/aliases.json
+python3 tools/build_data.py parsed/aap15.json parsed/aap06.json parsed/ajp_lex.json \
+        data/terms.json data/sv-keywords.json data/supplementary.json data/aliases.json
 ```
 
 Then bump `CACHE` in `sw.js` so installed copies pick up the new file.
@@ -109,8 +132,21 @@ pdftohtml -xml -i -stdout AAP-15.pdf > aap15.xml
 pdftohtml -xml -i -stdout AAP-06.pdf > aap06.xml
 python3 tools/parse_aap15.py aap15.xml parsed/aap15.json
 python3 tools/parse_aap06.py aap06.xml parsed/aap06.json
-python3 tools/build_data.py parsed/aap15.json parsed/aap06.json data/terms.json \
-        data/sv-keywords.json data/supplementary.json data/aliases.json
+```
+
+The Allied Joint Publications are fetched from GOV.UK, which publishes the
+current editions openly:
+
+```bash
+python3 tools/fetch_ajp.py parsed/ajp_manifest.json
+python3 tools/parse_ajp.py pdfs/ parsed/ajp_manifest.json parsed/ajp_lex.json
+```
+
+Then merge everything:
+
+```bash
+python3 tools/build_data.py parsed/aap15.json parsed/aap06.json parsed/ajp_lex.json \
+        data/terms.json data/sv-keywords.json data/supplementary.json data/aliases.json
 ```
 
 The AAP-15 parser reads the PDF's typography rather than its text: bold marks a
@@ -118,6 +154,12 @@ headword, upright text is the entry's primary language and italic the secondary,
 and the status line (`NATO Agreed` / `Agréé OTAN`) says which is which. Line
 breaks are re-flowed using Helvetica metrics (`tools/helv.py`), so a wrapped
 phrase can be told apart from a second synonym on its own line.
+
+The AJP parser cannot rely on headings — publications word them differently
+("Part 1 - Acronyms and abbreviations", "Acronyms, abbreviations, and
+initialisms", or none at all) — so it locates the Lexicon by its title page and
+classifies what follows by shape: a two-column line is an abbreviation, and a
+block ending in `(NATO Agreed)` is a term and its definition.
 
 ## Layout
 
@@ -127,7 +169,7 @@ styles.css      light/dark theming, no framework
 app.js          index building, search, rendering
 sw.js           offline cache
 data/           terminology and the keyword layers
-tools/          PDF parsers and the dataset builder
+tools/          PDF parsers, the AJP fetcher and the dataset builder
 ```
 
 No build step, no dependencies, no CDN. Everything the page loads is in this
@@ -137,7 +179,8 @@ repository.
 
 The code in this repository is MIT licensed — see `LICENSE`.
 
-The terminology is NATO's. NATO states that its terminology may be copied
+The terminology is NATO's. The Allied Joint Publications are Crown copyright
+where published by the UK Ministry of Defence and are released for public use. NATO states that its terminology may be copied
 without the express consent of the NATO Standardization Office provided NATO is
 shown as the source; terminology NATO has taken from external sources may be
 subject to third-party copyright. This is an unofficial aid and carries no

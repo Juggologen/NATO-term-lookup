@@ -274,13 +274,6 @@ body {
   font-size: 13.5px;
 }
 
-.fr {
-  margin: 7px 0 0;
-  font-size: 13.5px;
-  color: var(--text-faint);
-  font-style: italic;
-}
-
 .sv {
   margin: 7px 0 0;
   font-size: 13.5px;
@@ -312,6 +305,7 @@ body {
 .tag-common  { background: var(--warn-bg); border-color: transparent; color: var(--warn); }
 .tag-flag    { background: var(--warn-bg); border-color: transparent; color: var(--warn); }
 .tag-also    { background: var(--accent-bg); border-color: transparent; color: var(--accent); }
+.tag-pub     { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0; }
 
 mark {
   background: var(--accent-bg);

@@ -228,6 +228,7 @@ def parse_entry(entry):
         'abbr': abbrs[0],
         'variants': variants,
         'fr_abbr': fr_abbr,
+        'en_abbr': en_abbr,
         'en': en,
         'en_alts': en_alts,
         'fr': fr,
