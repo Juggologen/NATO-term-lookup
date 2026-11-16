@@ -66,11 +66,10 @@ def attach(entries, spec, field, value_key):
 
 
 def main(aap15_path, aap06_path, ajp_path, out_path,
-         sv_path=None, supp_path=None, alias_path=None):
+         supp_path=None, alias_path=None):
     a15 = json.load(open(aap15_path, encoding='utf-8'))
     a06 = json.load(open(aap06_path, encoding='utf-8'))
     ajp = json.load(open(ajp_path, encoding='utf-8')) if ajp_path else []
-    sv = json.load(open(sv_path, encoding='utf-8')) if sv_path else {}
     supp = json.load(open(supp_path, encoding='utf-8')) if supp_path else {'entries': []}
     aliases = json.load(open(alias_path, encoding='utf-8')) if alias_path else {}
 
@@ -220,7 +219,6 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
         by_abbr.setdefault(up, []).append(e)
         supp_kept += 1
 
-    sv_hits = attach(entries, sv, 'sv', 'sv')
     alias_hits = attach(entries, aliases, 'k', 'k')
 
     # Short, human titles for the publication filter, e.g.
@@ -258,7 +256,7 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
     print(f'  AJP: new abbreviations={added_abbr} new terms={added_term} '
           f'cross-referenced onto existing={reffed_abbr + reffed_term}')
     print(f'  supplementary: kept={supp_kept} dropped_as_covered={supp_dropped}')
-    print(f'  keywords: swedish={sv_hits} aliases={alias_hits}')
+    print(f'  keywords: aliases={alias_hits}')
 
 
 if __name__ == '__main__':

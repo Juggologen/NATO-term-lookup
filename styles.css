@@ -413,13 +413,6 @@ body {
   font-size: 13.5px;
 }
 
-.sv {
-  margin: 7px 0 0;
-  font-size: 13.5px;
-  color: var(--text-faint);
-}
-.sv b { font-weight: 600; font-style: normal; color: var(--text-dim); }
-
 .meta {
   margin: 10px 0 0;
   display: flex;

@@ -71,7 +71,7 @@
   /* Short, high-signal fields are scored separately from long prose, so a
      two-word term that matches beats a long definition that happens to
      contain several of the query words. */
-  var F_TERM = [['t', 3], ['k', 2.6], ['sv', 2.6], ['alt', 2], ['v', 2]];
+  var F_TERM = [['t', 3], ['k', 2.6], ['alt', 2], ['v', 2]];
   var F_BODY = [['d', 1], ['d2', 1], ['n', 1.2]];
 
   var pTerm = Object.create(null);
@@ -133,7 +133,7 @@
 
       foldedTerm[i] = fold(e.t || '');
       foldedBody[i] = fold([e.d || '', (e.d2 || []).join(' '), (e.n || []).join(' '),
-                            (e.sv || []).join(' '), (e.k || []).join(' ')].join(' '));
+                            (e.k || []).join(' ')].join(' '));
 
       var keys = [];
       if (e.a) keys.push(normAbbr(e.a));
@@ -384,8 +384,8 @@
           for (var v = r[0]; v < r[1]; v++) offer(vocab[v], 0.5);
         }
       }
-      /* Long compound with no hit at all (common in Swedish): fall back to the
-         longest prefix that exists in the vocabulary. */
+      /* Long compound with no hit at all: fall back to the longest prefix
+         that exists in the vocabulary. */
       var any = false;
       for (var ck in cand) { any = true; break; }
       if (!any && tok.length >= 7) {
@@ -591,12 +591,6 @@
       var nn = el('p', 'note');
       nn.appendChild(highlight(e.n[n2], terms));
       box.appendChild(nn);
-    }
-    if (e.sv) {
-      var sv = el('p', 'sv');
-      sv.appendChild(el('b', null, 'SV '));
-      sv.appendChild(highlight(e.sv.join(', '), terms));
-      box.appendChild(sv);
     }
     var meta = el('p', 'meta');
     if (e.alt) meta.appendChild(el('span', 'tag tag-also', 'also: ' + e.alt.join('; ')));

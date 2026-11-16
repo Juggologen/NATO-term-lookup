@@ -14,7 +14,7 @@ phone and it works with no signal.
 | Field | What to type | What you get |
 | --- | --- | --- |
 | **Abbreviation** | `CIMIC`, `rOE`, partial forms like `MEDE` | Every sense of that abbreviation, exact matches first |
-| **Term or description** | The proper term, or plain words in English or Swedish | Ranked candidate entries |
+| **Term or description** | The proper term, or plain words | Ranked candidate entries |
 
 Fill in both fields to narrow results to entries matching both. `/` jumps to the
 abbreviation field, `Esc` clears the focused field. The theme follows the
@@ -84,7 +84,7 @@ the French abbreviation are re-keyed to their English abbreviation on build, so
 
 ### Unofficial additions
 
-Three small layers are **not** NATO terminology. They exist so the search can be
+Two small layers are **not** NATO terminology. They exist so the search can be
 driven in everyday language, and the app labels them:
 
 - `data/supplementary.json` — abbreviations in common use that none of the
@@ -92,12 +92,10 @@ driven in everyday language, and the app labels them:
   **Common usage** tag. Entries here are dropped automatically if a source
   later covers them, which is what happened to IFF, LNO, LOGREP, PSYOPS,
   STRATCOM and UAS once the AJP lexicons were added — 8 remain.
-- `data/sv-keywords.json` — Swedish terms for 128 entries, shown on the card as
-  `SV`. A search aid, not a translation authority.
 - `data/aliases.json` — plain-language English phrases ("roadside bomb" → IED)
   for 93 entries. Used for searching only; not displayed.
 
-All three are plain JSON and are meant to be extended — see below.
+Both are plain JSON and are meant to be extended — see below.
 
 ## How well does the description search work?
 
@@ -128,15 +126,14 @@ Both keyword files use the same shape. `abbr` is keyed by abbreviation; add
 }
 ```
 
-`sv-keywords.json` is identical but uses `"sv"` instead of `"k"`. Diacritics are
-optional in both: search folds `å ä ö é` to their base letters, so *sjöräddning*
-and *sjoraddning* both match.
+Diacritics are optional: search folds `å ä ö é` to their base letters, so
+*résumé* and *resume* both match.
 
 After editing, rebuild `data/terms.json`:
 
 ```bash
 python3 tools/build_data.py parsed/aap15.json parsed/aap06.json parsed/ajp_lex.json \
-        data/terms.json data/sv-keywords.json data/supplementary.json data/aliases.json
+        data/terms.json data/supplementary.json data/aliases.json
 ```
 
 Then bump `CACHE` in `sw.js` so installed copies pick up the new file.
@@ -164,7 +161,7 @@ Then merge everything:
 
 ```bash
 python3 tools/build_data.py parsed/aap15.json parsed/aap06.json parsed/ajp_lex.json \
-        data/terms.json data/sv-keywords.json data/supplementary.json data/aliases.json
+        data/terms.json data/supplementary.json data/aliases.json
 ```
 
 The AAP-15 parser reads the PDF's typography rather than its text: bold marks a
