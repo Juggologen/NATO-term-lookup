@@ -223,6 +223,17 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
     sv_hits = attach(entries, sv, 'sv', 'sv')
     alias_hits = attach(entries, aliases, 'k', 'k')
 
+    # Short, human titles for the publication filter, e.g.
+    # "Allied Joint Doctrine for Air and Space Operations (AJP-3.3)"
+    # -> "Air and Space Operations"
+    pubs = {}
+    for pub in ajp:
+        title = re.sub(r'\s*\(AJP-[0-9.]+\)\s*$', '', pub['title']).strip()
+        short = re.sub(r'^Allied Joint Doctrine for (the )?', '', title).strip()
+        if not short or short.lower() == 'allied joint doctrine':
+            short = title
+        pubs[pub['code']] = short[:1].upper() + short[1:]
+
     entries.sort(key=lambda e: (norm(e['a'] or e['t']), norm(e['t'])))
     payload = {
         'generated': '2026-11-16',
@@ -235,6 +246,7 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
             {'id': 'AJP', 'title': 'Allied Joint Publication lexicons',
              'note': '32 publications, current editions'},
         ],
+        'publications': pubs,
         'entries': entries,
     }
     with open(out_path, 'w', encoding='utf-8') as fh:

@@ -20,6 +20,24 @@ Fill in both fields to narrow results to entries matching both. `/` jumps to the
 abbreviation field, `Esc` clears the focused field. The theme follows the
 operating system and the toggle overrides it.
 
+### Filtering by source
+
+The **All sources** button above the results opens a checkbox list of all 35
+sources — the three glossaries plus each of the 32 Allied Joint Publications.
+Tick as many as you like; results are limited to entries that come from, or are
+referenced by, those sources.
+
+The list has its own search box, which matches both the code and the subject, so
+typing `air` finds AJP-3.3 (Air and Space Operations), AJP-3.3.5 (Airspace
+Control) and AJP-10.3, and typing `targeting` finds AJP-3.9. Each row shows how
+many entries that source contributes. **Any Allied Joint Publication** matches
+anything with a doctrine reference.
+
+With a source ticked and both search fields empty, the app lists that source's
+vocabulary instead of the empty state, so you can browse a publication's lexicon
+end to end. The filter resets when you reload the page — it is deliberately not
+remembered, so you never search a narrowed set without noticing.
+
 ### Installing on a phone
 
 Open the page, then *Add to Home Screen* (iOS Safari) or *Install app*

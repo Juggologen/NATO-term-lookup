@@ -57,6 +57,25 @@ try {
   </section>
 
   <div class="bar">
+    <div class="dropdown">
+      <button id="src-btn" class="src-btn" type="button" aria-expanded="false"
+              aria-controls="src-panel">
+        <span id="src-summary">All sources</span>
+        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </button>
+      <div id="src-panel" class="src-panel" hidden>
+        <input id="src-search" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Find a source…" aria-label="Find a source">
+        <div class="src-actions">
+          <button id="src-all" class="text-btn" type="button">Select all</button>
+          <button id="src-none" class="text-btn" type="button">Clear selection</button>
+        </div>
+        <ul id="src-list" class="src-list" aria-label="Sources"></ul>
+        <p id="src-empty" class="src-none" hidden>No source matches that.</p>
+      </div>
+    </div>
     <p id="count" class="count" role="status" aria-live="polite"></p>
     <button id="clear" class="text-btn" type="button" hidden>Clear</button>
   </div>

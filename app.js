@@ -12,7 +12,15 @@
     empty:   document.getElementById('empty'),
     clear:   document.getElementById('clear'),
     theme:   document.getElementById('theme'),
-    status:  document.getElementById('status')
+    status:  document.getElementById('status'),
+    srcBtn:     document.getElementById('src-btn'),
+    srcSummary: document.getElementById('src-summary'),
+    srcPanel:   document.getElementById('src-panel'),
+    srcSearch:  document.getElementById('src-search'),
+    srcList:    document.getElementById('src-list'),
+    srcEmpty:   document.getElementById('src-empty'),
+    srcAll:     document.getElementById('src-all'),
+    srcNone:    document.getElementById('src-none')
   };
 
   /* ---------------- theme ---------------- */
@@ -49,6 +57,10 @@
   /* ---------------- index ---------------- */
 
   var entries = [];
+  var publications = {};
+  var sources = [];
+  var selected = Object.create(null);
+  var selectedCount = 0;
   var postings = Object.create(null);  // token -> [idx, weight, idx, weight, ...]
   var vocab = [];                      // sorted tokens, for prefix expansion
   var idf = Object.create(null);
@@ -158,6 +170,159 @@
     }
     return [start, lo];
   }
+
+  /* ---------------- source filter ---------------- */
+
+  var SRC_META = {
+    'AAP-15': 'Glossary of abbreviations',
+    'AAP-06': 'Glossary of terms and definitions',
+    'AJP': 'Any Allied Joint Publication',
+    'COMMON': 'Common usage, not an official source'
+  };
+
+  function buildSources() {
+    var counts = Object.create(null);
+    var anyAjp = 0;
+    for (var i = 0; i < entries.length; i++) {
+      var e = entries[i];
+      counts[e.s] = (counts[e.s] || 0) + 1;
+      if (e.p) {
+        anyAjp++;
+        for (var j = 0; j < e.p.length; j++) {
+          counts[e.p[j]] = (counts[e.p[j]] || 0) + 1;
+        }
+      } else if (e.s === 'AJP') {
+        anyAjp++;
+      }
+    }
+    sources = [];
+    ['AAP-15', 'AAP-06', 'COMMON'].forEach(function (id) {
+      if (counts[id]) {
+        sources.push({ id: id, code: id === 'COMMON' ? 'Common' : id,
+                       name: SRC_META[id], count: counts[id], group: 'glossary' });
+      }
+    });
+    sources.push({ id: 'AJP', code: 'AJP', name: SRC_META.AJP,
+                   count: anyAjp, group: 'glossary' });
+    var codes = Object.keys(publications).sort(function (a, b) {
+      return a.localeCompare(b, 'en', { numeric: true });
+    });
+    for (var c = 0; c < codes.length; c++) {
+      sources.push({ id: codes[c], code: codes[c], name: publications[codes[c]],
+                     count: counts[codes[c]] || 0, group: 'ajp' });
+    }
+    renderSources('');
+  }
+
+  function renderSources(query) {
+    var q = fold(query).trim();
+    var frag = document.createDocumentFragment();
+    var shown = 0, lastGroup = null;
+    for (var i = 0; i < sources.length; i++) {
+      var sc = sources[i];
+      if (q && fold(sc.code + ' ' + sc.name).indexOf(q) === -1) continue;
+      if (sc.group !== lastGroup && sc.group === 'ajp') {
+        var sep = el('li', 'src-sep', 'Allied Joint Publications');
+        frag.appendChild(sep);
+      }
+      lastGroup = sc.group;
+      var li = el('li');
+      var lab = el('label');
+      var box = document.createElement('input');
+      box.type = 'checkbox';
+      box.value = sc.id;
+      box.checked = !!selected[sc.id];
+      lab.appendChild(box);
+      lab.appendChild(el('span', 'src-code', sc.code));
+      lab.appendChild(el('span', 'src-name', sc.name));
+      lab.appendChild(el('span', 'src-count', String(sc.count)));
+      li.appendChild(lab);
+      frag.appendChild(li);
+      shown++;
+    }
+    els.srcList.textContent = '';
+    els.srcList.appendChild(frag);
+    els.srcEmpty.hidden = shown > 0;
+  }
+
+  function summarise() {
+    if (!selectedCount) {
+      els.srcSummary.textContent = 'All sources';
+      els.srcBtn.classList.remove('on');
+      return;
+    }
+    var names = [];
+    for (var i = 0; i < sources.length && names.length < 2; i++) {
+      if (selected[sources[i].id]) names.push(sources[i].code);
+    }
+    var text = names.join(', ');
+    if (selectedCount > names.length) text += ' +' + (selectedCount - names.length);
+    els.srcSummary.textContent = text;
+    els.srcBtn.classList.add('on');
+  }
+
+  function inSelectedSources(e) {
+    if (!selectedCount) return true;
+    if (selected.AJP && (e.s === 'AJP' || e.p)) return true;
+    if (selected[e.s]) return true;
+    if (e.p) {
+      for (var i = 0; i < e.p.length; i++) if (selected[e.p[i]]) return true;
+    }
+    return false;
+  }
+
+  function openPanel(open) {
+    els.srcPanel.hidden = !open;
+    els.srcBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) {
+      renderSources(els.srcSearch.value);
+      els.srcSearch.focus();
+      els.srcSearch.select();
+    }
+  }
+
+  els.srcBtn.addEventListener('click', function () {
+    openPanel(els.srcPanel.hidden);
+  });
+  els.srcSearch.addEventListener('input', function () {
+    renderSources(els.srcSearch.value);
+  });
+  els.srcList.addEventListener('change', function (ev) {
+    var box = ev.target;
+    if (!box || box.type !== 'checkbox') return;
+    if (box.checked) {
+      if (!selected[box.value]) { selected[box.value] = true; selectedCount++; }
+    } else if (selected[box.value]) {
+      delete selected[box.value];
+      selectedCount--;
+    }
+    summarise();
+    run();
+  });
+  els.srcAll.addEventListener('click', function () {
+    selected = Object.create(null);
+    selectedCount = 0;
+    for (var i = 0; i < sources.length; i++) {
+      if (sources[i].id === 'AJP') continue;      /* implied by the individual ones */
+      selected[sources[i].id] = true;
+      selectedCount++;
+    }
+    renderSources(els.srcSearch.value);
+    summarise();
+    run();
+  });
+  els.srcNone.addEventListener('click', function () {
+    selected = Object.create(null);
+    selectedCount = 0;
+    renderSources(els.srcSearch.value);
+    summarise();
+    run();
+  });
+  document.addEventListener('click', function (ev) {
+    if (els.srcPanel.hidden) return;
+    if (els.srcPanel.contains(ev.target) || els.srcBtn.contains(ev.target)) return;
+    openPanel(false);
+  });
 
   /* ---------------- search ---------------- */
 
@@ -302,6 +467,17 @@
     els.clear.hidden = !(qa || qt);
 
     if (!qa && !qt) {
+      /* With a source selected and nothing typed, list that source instead of
+         showing the empty state - it makes the filter usable for browsing. */
+      if (selectedCount && entries.length) {
+        els.empty.hidden = true;
+        var all = [];
+        for (var b = 0; b < entries.length; b++) {
+          if (inSelectedSources(entries[b])) all.push(b);
+        }
+        render(all, '', '');
+        return;
+      }
       els.results.textContent = '';
       els.count.textContent = '';
       els.empty.hidden = false;
@@ -320,7 +496,7 @@
     var out = [];
     for (var i = 0; i < touched.length; i++) {
       var idx = touched[i];
-      if (scores[idx] > 0) out.push(idx);
+      if (scores[idx] > 0 && inSelectedSources(entries[idx])) out.push(idx);
     }
     if (!textActive && qa) {
       /* searchAbbr pushed its own matches */
@@ -452,13 +628,18 @@
     els.results.textContent = '';
     els.results.appendChild(frag);
 
+    var within = selectedCount ? ' in the selected source' + (selectedCount > 1 ? 's' : '') : '';
     if (!list.length) {
-      els.count.textContent = 'No match.';
-      els.results.appendChild(el('p', 'empty', 'Nothing found. Try fewer words, or the other field.'));
+      els.count.textContent = 'No match' + within + '.';
+      els.results.appendChild(el('p', 'empty', selectedCount
+        ? 'Nothing found in the selected sources. Widen the source filter, or try fewer words.'
+        : 'Nothing found. Try fewer words, or the other field.'));
     } else if (list.length > shown) {
-      els.count.textContent = 'Showing ' + shown + ' of ' + list.length + ' matches';
+      els.count.textContent = 'Showing ' + shown + ' of ' +
+        list.length.toLocaleString('en-GB') + (within || ' matches');
     } else {
-      els.count.textContent = list.length + (list.length === 1 ? ' match' : ' matches');
+      els.count.textContent = list.length +
+        (list.length === 1 ? ' match' : ' matches') + within;
     }
   }
 
@@ -488,6 +669,11 @@
   });
 
   document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && !els.srcPanel.hidden) {
+      openPanel(false);
+      els.srcBtn.focus();
+      return;
+    }
     if (ev.key === 'Escape') {
       if (document.activeElement === els.abbr || document.activeElement === els.text) {
         document.activeElement.value = '';
@@ -510,12 +696,14 @@
     })
     .then(function (data) {
       entries = data.entries;
+      publications = data.publications || {};
       scores = new Float64Array(entries.length);
       hits = new Int32Array(entries.length);
       hitGen = new Int32Array(entries.length);
       termScratch = new Float64Array(entries.length);
       bodyScratch = new Float64Array(entries.length);
       buildIndex();
+      buildSources();
       els.status.textContent = entries.length.toLocaleString('en-GB') + ' entries loaded · built ' + data.generated;
       run();
     })
