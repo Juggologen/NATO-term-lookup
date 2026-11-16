@@ -1,0 +1,875 @@
+{
+  "_comment": "UNOFFICIAL Swedish search keywords. Not a NATO source. This layer exists only so the free-text search can be driven in Swedish; it is not a translation authority. 'abbr' is keyed by AAP-15 abbreviation, optionally narrowed with 'en' when the abbreviation has several meanings. 'term' is keyed by an English term. Diacritics are optional - search folds them.",
+  "abbr": {
+    "AAR": [
+      {
+        "en": "after-action review",
+        "sv": [
+          "erfarenhetsåtervinning",
+          "efteranalys",
+          "utvärdering efter insats"
+        ]
+      },
+      {
+        "en": "air-to-air refuelling",
+        "sv": [
+          "lufttankning"
+        ]
+      }
+    ],
+    "ACO": [
+      {
+        "en": "Allied Command Operations",
+        "sv": [
+          "allierade operationskommandot"
+        ]
+      },
+      {
+        "en": "airspace control order",
+        "sv": [
+          "luftrumsorder",
+          "luftrumssamordning"
+        ]
+      }
+    ],
+    "ACT": [
+      {
+        "sv": [
+          "allierade transformationskommandot"
+        ]
+      }
+    ],
+    "AD": [
+      {
+        "en": "air defence",
+        "sv": [
+          "luftförsvar",
+          "luftvärn"
+        ]
+      }
+    ],
+    "ADCON": [
+      {
+        "sv": [
+          "administrativ kontroll"
+        ]
+      }
+    ],
+    "AOI": [
+      {
+        "en": "area of interest",
+        "sv": [
+          "intresseområde"
+        ]
+      }
+    ],
+    "AOO": [
+      {
+        "sv": [
+          "operationsområde",
+          "insatsområde"
+        ]
+      }
+    ],
+    "AOR": [
+      {
+        "sv": [
+          "ansvarsområde"
+        ]
+      }
+    ],
+    "APOD": [
+      {
+        "sv": [
+          "flygplats för urlastning",
+          "urlastningsflygplats"
+        ]
+      }
+    ],
+    "APOE": [
+      {
+        "sv": [
+          "flygplats för lastning"
+        ]
+      }
+    ],
+    "ASW": [
+      {
+        "sv": [
+          "ubåtsjakt",
+          "ubåtsförsvar"
+        ]
+      }
+    ],
+    "ATO": [
+      {
+        "en": "air task order",
+        "sv": [
+          "flygorder",
+          "flygstridsorder"
+        ]
+      }
+    ],
+    "BDA": [
+      {
+        "sv": [
+          "verkansbedömning",
+          "stridsskadebedömning"
+        ]
+      }
+    ],
+    "C2": [
+      {
+        "sv": [
+          "ledning",
+          "ledning och kontroll",
+          "förbandsledning"
+        ]
+      }
+    ],
+    "CAS": [
+      {
+        "sv": [
+          "flygunderstöd",
+          "nära flygunderstöd"
+        ]
+      }
+    ],
+    "CASEVAC": [
+      {
+        "sv": [
+          "skadeevakuering",
+          "evakuering av skadade"
+        ]
+      }
+    ],
+    "CBRN": [
+      {
+        "sv": [
+          "CBRN",
+          "kemiska, biologiska, radiologiska och nukleära stridsmedel",
+          "ABC-stridsmedel"
+        ]
+      }
+    ],
+    "CCIR": [
+      {
+        "sv": [
+          "chefens kritiska informationsbehov"
+        ]
+      }
+    ],
+    "CIMIC": [
+      {
+        "sv": [
+          "civil-militär samverkan",
+          "civilmilitär samverkan"
+        ]
+      }
+    ],
+    "CIVCAS": [
+      {
+        "sv": [
+          "civila förluster",
+          "civila offer"
+        ]
+      }
+    ],
+    "COA": [
+      {
+        "sv": [
+          "handlingsalternativ",
+          "handlingsväg",
+          "handlingsmöjlighet"
+        ]
+      }
+    ],
+    "COIN": [
+      {
+        "sv": [
+          "upprorsbekämpning"
+        ]
+      }
+    ],
+    "COMSEC": [
+      {
+        "sv": [
+          "sambandssäkerhet"
+        ]
+      }
+    ],
+    "CONOPS": [
+      {
+        "sv": [
+          "operationsidé",
+          "operationskoncept"
+        ]
+      }
+    ],
+    "CP": [
+      {
+        "en": "command post",
+        "sv": [
+          "ledningsplats"
+        ]
+      }
+    ],
+    "CT": [
+      {
+        "en": "counterterrorism",
+        "sv": [
+          "terrorismbekämpning"
+        ]
+      }
+    ],
+    "DA": [
+      {
+        "en": "direct action",
+        "sv": [
+          "direkt aktion"
+        ]
+      }
+    ],
+    "DP": [
+      {
+        "en": "distribution point",
+        "sv": [
+          "utlämningsplats",
+          "distributionspunkt"
+        ]
+      }
+    ],
+    "DZ": [
+      {
+        "sv": [
+          "fällzon",
+          "fällplats"
+        ]
+      }
+    ],
+    "EEI": [
+      {
+        "en": "essential elements of information",
+        "sv": [
+          "väsentliga underrättelsebehov"
+        ]
+      }
+    ],
+    "EEZ": [
+      {
+        "sv": [
+          "ekonomisk zon"
+        ]
+      }
+    ],
+    "EOD": [
+      {
+        "sv": [
+          "ammunitionsröjning",
+          "röjning av oexploderad ammunition"
+        ]
+      }
+    ],
+    "EW": [
+      {
+        "en": "electromagnetic warfare",
+        "sv": [
+          "telekrigföring",
+          "telekrig"
+        ]
+      },
+      {
+        "en": "early warning",
+        "sv": [
+          "förvarning"
+        ]
+      }
+    ],
+    "FEBA": [
+      {
+        "sv": [
+          "främre kantlinje",
+          "främre försvarslinje"
+        ]
+      }
+    ],
+    "FLOT": [
+      {
+        "sv": [
+          "främre linje egna förband"
+        ]
+      }
+    ],
+    "FOB": [
+      {
+        "sv": [
+          "framskjuten bas"
+        ]
+      }
+    ],
+    "FRAGO": [
+      {
+        "sv": [
+          "tilläggsorder",
+          "fragorder",
+          "ändringsorder"
+        ]
+      }
+    ],
+    "FSCM": [
+      {
+        "sv": [
+          "eldtillståndsåtgärder",
+          "eldsamordningsåtgärder"
+        ]
+      }
+    ],
+    "HN": [
+      {
+        "sv": [
+          "värdnation",
+          "värdland"
+        ]
+      }
+    ],
+    "HNS": [
+      {
+        "sv": [
+          "värdlandsstöd"
+        ]
+      }
+    ],
+    "HPT": [
+      {
+        "en": "high pay-off target",
+        "sv": [
+          "högprioriterat mål"
+        ]
+      }
+    ],
+    "HQ": [
+      {
+        "sv": [
+          "stab",
+          "högkvarter"
+        ]
+      }
+    ],
+    "HUMINT": [
+      {
+        "sv": [
+          "personbaserad inhämtning",
+          "människobaserade underrättelser"
+        ]
+      }
+    ],
+    "HVT": [
+      {
+        "sv": [
+          "högvärdigt mål"
+        ]
+      }
+    ],
+    "IED": [
+      {
+        "sv": [
+          "improviserad spränganordning",
+          "improviserad sprängladdning",
+          "vägbomb"
+        ]
+      }
+    ],
+    "IMINT": [
+      {
+        "sv": [
+          "bildunderrättelser"
+        ]
+      }
+    ],
+    "INFOSEC": [
+      {
+        "sv": [
+          "informationssäkerhet"
+        ]
+      }
+    ],
+    "INTREP": [
+      {
+        "sv": [
+          "underrättelserapport"
+        ]
+      }
+    ],
+    "INTSUM": [
+      {
+        "sv": [
+          "underrättelsesammanfattning"
+        ]
+      }
+    ],
+    "ISR": [
+      {
+        "en": "intelligence, surveillance and reconnaissance",
+        "sv": [
+          "underrättelse, övervakning och spaning"
+        ]
+      }
+    ],
+    "JOA": [
+      {
+        "sv": [
+          "gemensamt operationsområde"
+        ]
+      }
+    ],
+    "JTAC": [
+      {
+        "sv": [
+          "flygstridsledare",
+          "eldledare för flyg"
+        ]
+      }
+    ],
+    "JTF": [
+      {
+        "sv": [
+          "gemensam insatsstyrka"
+        ]
+      }
+    ],
+    "KLE": [
+      {
+        "sv": [
+          "nyckelpersonsmöten",
+          "möte med nyckelperson"
+        ]
+      }
+    ],
+    "LD": [
+      {
+        "sv": [
+          "utgångslinje"
+        ]
+      }
+    ],
+    "LOAC": [
+      {
+        "sv": [
+          "krigets lagar",
+          "väpnad konflikts rätt"
+        ]
+      }
+    ],
+    "LOC": [
+      {
+        "en": "lines of communications",
+        "sv": [
+          "förbindelselinjer",
+          "underhållslinjer"
+        ]
+      }
+    ],
+    "LZ": [
+      {
+        "sv": [
+          "landningszon",
+          "landningsplats"
+        ]
+      }
+    ],
+    "MANPADS": [
+      {
+        "sv": [
+          "bärbart luftvärnsrobotsystem"
+        ]
+      }
+    ],
+    "MCM": [
+      {
+        "en": "mine countermeasures",
+        "sv": [
+          "minröjning",
+          "minmotåtgärder"
+        ]
+      }
+    ],
+    "MEDEVAC": [
+      {
+        "sv": [
+          "sjukvårdsevakuering",
+          "medicinsk evakuering"
+        ]
+      }
+    ],
+    "MSR": [
+      {
+        "en": "main supply route",
+        "sv": [
+          "huvudunderhållsväg",
+          "huvudtillfartsväg"
+        ]
+      }
+    ],
+    "NAC": [
+      {
+        "sv": [
+          "nordatlantiska rådet"
+        ]
+      }
+    ],
+    "NAI": [
+      {
+        "en": "named area of interest",
+        "sv": [
+          "namngivet intresseområde"
+        ]
+      }
+    ],
+    "NEO": [
+      {
+        "sv": [
+          "evakuering av civila",
+          "evakueringsoperation"
+        ]
+      }
+    ],
+    "NGO": [
+      {
+        "sv": [
+          "frivilligorganisation",
+          "icke-statlig organisation"
+        ]
+      }
+    ],
+    "NRF": [
+      {
+        "sv": [
+          "Natos insatsstyrka"
+        ]
+      }
+    ],
+    "OPCOM": [
+      {
+        "sv": [
+          "operativ ledning"
+        ]
+      }
+    ],
+    "OPCON": [
+      {
+        "sv": [
+          "operativ kontroll"
+        ]
+      }
+    ],
+    "OPFOR": [
+      {
+        "sv": [
+          "motståndarstyrka",
+          "fiendestyrka",
+          "övningsmotståndare"
+        ]
+      }
+    ],
+    "OPLAN": [
+      {
+        "sv": [
+          "operationsplan"
+        ]
+      }
+    ],
+    "OPORD": [
+      {
+        "sv": [
+          "operationsorder",
+          "order",
+          "stridsorder"
+        ]
+      }
+    ],
+    "OPSEC": [
+      {
+        "sv": [
+          "operationssäkerhet"
+        ]
+      }
+    ],
+    "ORBAT": [
+      {
+        "sv": [
+          "stridsordning",
+          "organisationstablå"
+        ]
+      }
+    ],
+    "PIR": [
+      {
+        "sv": [
+          "prioriterade underrättelsebehov"
+        ]
+      }
+    ],
+    "PL": [
+      {
+        "en": "phase line",
+        "sv": [
+          "fasgräns",
+          "faslinje"
+        ]
+      }
+    ],
+    "POW": [
+      {
+        "en": "prisoner of war",
+        "sv": [
+          "krigsfånge"
+        ]
+      }
+    ],
+    "PZ": [
+      {
+        "en": "pick-up zone",
+        "sv": [
+          "upptagningsplats",
+          "hämtplats"
+        ]
+      }
+    ],
+    "QRF": [
+      {
+        "sv": [
+          "snabbinsatsstyrka",
+          "beredskapsstyrka"
+        ]
+      }
+    ],
+    "RFI": [
+      {
+        "en": "request for information",
+        "sv": [
+          "begäran om information"
+        ]
+      }
+    ],
+    "ROE": [
+      {
+        "sv": [
+          "insatsregler",
+          "engagemangsregler"
+        ]
+      }
+    ],
+    "RSOM": [
+      {
+        "sv": [
+          "mottagning, uppställning och vidaretransport"
+        ]
+      }
+    ],
+    "RV": [
+      {
+        "en": "rendezvous point",
+        "sv": [
+          "mötesplats",
+          "samlingsplats"
+        ]
+      }
+    ],
+    "SAR": [
+      {
+        "en": "search and rescue",
+        "sv": [
+          "sjöräddning",
+          "flygräddning",
+          "eftersök och räddning"
+        ]
+      }
+    ],
+    "SEAD": [
+      {
+        "sv": [
+          "bekämpning av luftvärn"
+        ]
+      }
+    ],
+    "SHAPE": [
+      {
+        "sv": [
+          "högkvarteret för de allierade styrkorna i Europa"
+        ]
+      }
+    ],
+    "SIGINT": [
+      {
+        "sv": [
+          "signalspaning",
+          "signalunderrättelser"
+        ]
+      }
+    ],
+    "SITREP": [
+      {
+        "sv": [
+          "lägesrapport",
+          "situationsrapport"
+        ]
+      }
+    ],
+    "SOF": [
+      {
+        "en": "special operations forces",
+        "sv": [
+          "specialförband"
+        ]
+      }
+    ],
+    "SOFA": [
+      {
+        "sv": [
+          "statusavtal",
+          "avtal om styrkors rättsliga status"
+        ]
+      }
+    ],
+    "SOP": [
+      {
+        "sv": [
+          "instruktion",
+          "rutin",
+          "standardrutin"
+        ]
+      }
+    ],
+    "SPOD": [
+      {
+        "sv": [
+          "hamn för urlastning",
+          "urlastningshamn"
+        ]
+      }
+    ],
+    "STANAG": [
+      {
+        "sv": [
+          "standardiseringsavtal"
+        ]
+      }
+    ],
+    "TACON": [
+      {
+        "sv": [
+          "taktisk kontroll"
+        ]
+      }
+    ],
+    "TAI": [
+      {
+        "sv": [
+          "målintresseområde"
+        ]
+      }
+    ],
+    "TOA": [
+      {
+        "sv": [
+          "överföring av lydnad"
+        ]
+      }
+    ],
+    "TTP": [
+      {
+        "sv": [
+          "taktik, teknik och procedurer"
+        ]
+      }
+    ],
+    "UXO": [
+      {
+        "sv": [
+          "oexploderad ammunition"
+        ]
+      }
+    ],
+    "VJTF": [
+      {
+        "sv": [
+          "mycket snabb insatsstyrka"
+        ]
+      }
+    ],
+    "WNGO": [
+      {
+        "sv": [
+          "förvarningsorder",
+          "förberedande order"
+        ]
+      }
+    ]
+  },
+  "term": {
+    "centre of gravity": [
+      "tyngdpunkt"
+    ],
+    "decision point": [
+      "beslutspunkt"
+    ],
+    "limit of advance": [
+      "gräns för framryckning"
+    ],
+    "main effort": [
+      "huvudinsats",
+      "tyngdpunkt för insatsen"
+    ],
+    "line of departure": [
+      "utgångslinje"
+    ],
+    "end state": [
+      "slutläge",
+      "önskat slutläge"
+    ],
+    "commander's intent": [
+      "chefens avsikt"
+    ],
+    "mission command": [
+      "uppdragstaktik"
+    ],
+    "collateral damage": [
+      "oavsiktlig skada",
+      "sidoskada"
+    ],
+    "deception": [
+      "vilseledning"
+    ],
+    "reconnaissance": [
+      "spaning"
+    ],
+    "surveillance": [
+      "övervakning"
+    ],
+    "withdrawal": [
+      "tillbakadragande"
+    ],
+    "ambush": [
+      "bakhåll"
+    ],
+    "obstacle": [
+      "hinder"
+    ],
+    "breach": [
+      "genombrytning"
+    ],
+    "bridgehead": [
+      "brohuvud"
+    ],
+    "rules of engagement": [
+      "insatsregler"
+    ],
+    "chain of command": [
+      "lydnadslinje",
+      "befälskedja"
+    ],
+    "order of battle": [
+      "stridsordning"
+    ]
+  }
+}

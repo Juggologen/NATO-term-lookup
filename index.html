@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NATO Lookup</title>
+<meta name="description" content="Offline quick reference for NATO abbreviations and terms, from AAP-15 and AAP-06.">
+<meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="styles.css">
+<script>
+/* Apply the saved theme before first paint so there is no flash. */
+try {
+  var t = localStorage.getItem('theme');
+  if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+} catch (e) {}
+</script>
+</head>
+<body>
+<a class="skip" href="#results">Skip to results</a>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <h1>NATO Lookup</h1>
+      <p class="brand-sub">AAP-15 &middot; AAP-06</p>
+    </div>
+    <button id="theme" class="icon-btn" type="button" aria-label="Switch colour theme">
+      <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.2"/>
+        <path d="M12 2.5v2.6M12 18.9v2.6M4.2 12H1.6M22.4 12h-2.6M6.5 6.5 4.6 4.6M19.4 19.4l-1.9-1.9M17.5 6.5l1.9-1.9M4.6 19.4l1.9-1.9"/>
+      </svg>
+      <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M20 14.2A8.3 8.3 0 0 1 9.8 4a8.3 8.3 0 1 0 10.2 10.2z"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="search" aria-label="Search">
+    <div class="field">
+      <label for="q-abbr">Abbreviation</label>
+      <input id="q-abbr" type="search" autocomplete="off" autocapitalize="characters"
+             spellcheck="false" placeholder="OPORD" enterkeyhint="search">
+      <p class="hint">Type the short form to get the full term.</p>
+    </div>
+    <div class="field">
+      <label for="q-text">Term or description</label>
+      <input id="q-text" type="search" autocomplete="off" spellcheck="false"
+             placeholder="order telling units what to do" enterkeyhint="search">
+      <p class="hint">Describe it in plain words, English or Swedish, to find the abbreviation.</p>
+    </div>
+  </section>
+
+  <div class="bar">
+    <p id="count" class="count" role="status" aria-live="polite"></p>
+    <button id="clear" class="text-btn" type="button" hidden>Clear</button>
+  </div>
+
+  <section id="results" class="results" aria-label="Results" tabindex="-1"></section>
+
+  <section id="empty" class="empty">
+    <p>Start typing in either field.</p>
+    <ul class="examples" aria-label="Examples">
+      <li><button type="button" data-abbr="OPORD">OPORD</button></li>
+      <li><button type="button" data-abbr="CIMIC">CIMIC</button></li>
+      <li><button type="button" data-abbr="ROE">ROE</button></li>
+      <li><button type="button" data-text="evacuation of wounded">evacuation of wounded</button></li>
+      <li><button type="button" data-text="insatsregler">insatsregler</button></li>
+    </ul>
+  </section>
+</main>
+
+<footer class="wrap site-footer">
+  <p>
+    Terminology from <strong>AAP-15</strong> (NATOTerm extract, 15 April 2026) and
+    <strong>AAP-06</strong> (2019), published by the NATO Standardization Office.
+    Entries marked <span class="tag tag-common">Common usage</span> and all Swedish
+    keywords are unofficial additions to make searching easier.
+  </p>
+  <p>Runs entirely in your browser. Nothing you type leaves the device.</p>
+  <p id="status" class="status"></p>
+</footer>
+
+<script src="app.js" defer></script>
+</body>
+</html>

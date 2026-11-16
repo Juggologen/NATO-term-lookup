@@ -1,0 +1,19 @@
+{
+  "_comment": "Widely used abbreviations that are absent from the AAP-15 NATOTerm extract and AAP-06. These are NOT NATO-agreed terminology; the app labels them 'Common usage' so they are never mistaken for an official entry. Remove this file from tools/build_data.py to ship official sources only.",
+  "entries": [
+    { "a": "NOTAM", "t": "notice to air missions", "d": "A notice distributed by telecommunication containing information on the establishment, condition or change in any aeronautical facility, service, procedure or hazard, the timely knowledge of which is essential to personnel concerned with flight operations. Formerly 'notice to airmen'." },
+    { "a": "IFF", "t": "identification friend or foe", "d": "A system using electromagnetic transmissions to which equipment carried by friendly forces automatically responds, distinguishing them from hostile or neutral platforms." },
+    { "a": "UAV", "t": "unmanned aerial vehicle", "d": "An aircraft that operates without a human pilot on board. Often used interchangeably with the wider term unmanned aircraft system (UAS), which also covers the control station and data link." },
+    { "a": "UAS", "t": "unmanned aircraft system", "d": "The complete system comprising the unmanned aircraft, its control station, the data link and any supporting equipment." },
+    { "a": "PSYOPS", "t": "psychological operations", "d": "Planned activities using methods of communication directed at approved audiences in order to influence perceptions, attitudes and behaviour in support of political and military objectives. NATO doctrine increasingly uses 'information operations' and 'StratCom' for the wider effort." },
+    { "a": "LNO", "t": "liaison officer", "d": "An officer attached to another headquarters, formation or civil organisation to coordinate activity and maintain mutual understanding between the two." },
+    { "a": "LOGREP", "t": "logistics report", "d": "A periodic report on the logistic status of a unit or formation, covering supply levels, equipment serviceability and transport capacity." },
+    { "a": "SPOTREP", "t": "spot report", "d": "A concise, immediate report of an observation or event of tactical significance, sent as soon as it occurs rather than at a scheduled reporting time." },
+    { "a": "STRATCOM", "t": "strategic communications", "d": "The coordinated use of communications activities, including public diplomacy, public affairs, information operations and psychological operations, in support of Alliance policies, operations and activities." },
+    { "a": "C4ISR", "t": "command, control, communications, computers, intelligence, surveillance and reconnaissance", "d": "The combined set of systems and processes that provide a commander with situational awareness and the means to direct forces." },
+    { "a": "GBAD", "t": "ground-based air defence", "d": "Air defence delivered by surface-based weapon and sensor systems, as distinct from air-to-air or naval air defence." },
+    { "a": "WARNO", "t": "warning order", "d": "A preliminary notice of an order or action that is to follow, issued to give subordinates maximum time to prepare. AAP-15 records this abbreviation as WNGO." },
+    { "a": "TEWT", "t": "tactical exercise without troops", "d": "An exercise conducted on the ground, usually on the terrain concerned, in which commanders and staff work through a tactical problem without troops being deployed." },
+    { "a": "RGT", "t": "regiment", "d": "A unit level of organisation, typically comprising several battalions or squadrons; the exact size and role vary between nations and arms." }
+  ]
+}
