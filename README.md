@@ -22,8 +22,8 @@ operating system and the toggle overrides it.
 
 ### Filtering by source
 
-The **All sources** button above the results opens a checkbox list of all 35
-sources — the three glossaries plus each of the 32 Allied Joint Publications.
+The **Source** field, the third control next to the two search boxes, opens a
+checkbox list of all 35 sources — the three glossaries plus each of the 32 Allied Joint Publications.
 Tick as many as you like; results are limited to entries that come from, or are
 referenced by, those sources.
 

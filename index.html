@@ -26,7 +26,7 @@ try {
   <div class="wrap topbar-inner">
     <div class="brand">
       <h1>NATO Term Lookup</h1>
-      <p class="brand-sub">AAP-15 &middot; AAP-06 &middot; AJP</p>
+      <p class="tagline">For everyone who thinks NATO should get their shit together</p>
     </div>
     <button id="theme" class="icon-btn" type="button" aria-label="Switch colour theme">
       <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -54,28 +54,32 @@ try {
              placeholder="order telling units what to do" enterkeyhint="search">
       <p class="hint">Describe it in plain words, English or Swedish, to find the abbreviation.</p>
     </div>
+    <div class="field">
+      <label for="src-btn">Source</label>
+      <div class="dropdown">
+        <button id="src-btn" class="src-btn" type="button" aria-expanded="false"
+                aria-controls="src-panel">
+          <span id="src-summary">All sources</span>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </button>
+        <div id="src-panel" class="src-panel" hidden>
+          <input id="src-search" type="search" autocomplete="off" spellcheck="false"
+                 placeholder="Find a source…" aria-label="Find a source">
+          <div class="src-actions">
+            <button id="src-all" class="text-btn" type="button">Select all</button>
+            <button id="src-none" class="text-btn" type="button">Clear selection</button>
+          </div>
+          <ul id="src-list" class="src-list" aria-label="Sources"></ul>
+          <p id="src-empty" class="src-none" hidden>No source matches that.</p>
+        </div>
+      </div>
+      <p class="hint">Narrow results to chosen glossaries or publications.</p>
+    </div>
   </section>
 
   <div class="bar">
-    <div class="dropdown">
-      <button id="src-btn" class="src-btn" type="button" aria-expanded="false"
-              aria-controls="src-panel">
-        <span id="src-summary">All sources</span>
-        <svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="m6 9 6 6 6-6"/>
-        </svg>
-      </button>
-      <div id="src-panel" class="src-panel" hidden>
-        <input id="src-search" type="search" autocomplete="off" spellcheck="false"
-               placeholder="Find a source…" aria-label="Find a source">
-        <div class="src-actions">
-          <button id="src-all" class="text-btn" type="button">Select all</button>
-          <button id="src-none" class="text-btn" type="button">Clear selection</button>
-        </div>
-        <ul id="src-list" class="src-list" aria-label="Sources"></ul>
-        <p id="src-empty" class="src-none" hidden>No source matches that.</p>
-      </div>
-    </div>
     <p id="count" class="count" role="status" aria-live="polite"></p>
     <button id="clear" class="text-btn" type="button" hidden>Clear</button>
   </div>
@@ -84,13 +88,6 @@ try {
 
   <section id="empty" class="empty">
     <p>Start typing in either field.</p>
-    <ul class="examples" aria-label="Examples">
-      <li><button type="button" data-abbr="OPORD">OPORD</button></li>
-      <li><button type="button" data-abbr="CIMIC">CIMIC</button></li>
-      <li><button type="button" data-abbr="ROE">ROE</button></li>
-      <li><button type="button" data-text="evacuation of wounded">evacuation of wounded</button></li>
-      <li><button type="button" data-text="insatsregler">insatsregler</button></li>
-    </ul>
   </section>
 </main>
 

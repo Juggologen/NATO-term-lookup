@@ -111,16 +111,21 @@ body {
 
 .brand h1 {
   margin: 0;
-  font-size: 17px;
+  font-size: 22px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
 }
 
-.brand-sub {
-  margin: 1px 0 0;
-  font-size: 12px;
+.tagline {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-style: italic;
   color: var(--text-faint);
-  letter-spacing: 0.04em;
+}
+
+@media (min-width: 680px) {
+  .brand h1 { font-size: 25px; }
+  .tagline { font-size: 13.5px; }
 }
 
 .icon-btn {
@@ -160,11 +165,14 @@ body {
   margin: 22px 0 18px;
 }
 
-@media (min-width: 620px) {
-  .search { grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (min-width: 680px) {
+  .search {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) minmax(0, 0.85fr);
+    gap: 16px;
+  }
 }
 
-.field label {
+.field > label {
   display: block;
   font-size: 12px;
   font-weight: 600;
@@ -174,7 +182,7 @@ body {
   margin-bottom: 6px;
 }
 
-.field input {
+.field > input {
   width: 100%;
   padding: 11px 12px;
   font: inherit;
@@ -186,15 +194,14 @@ body {
   appearance: none;
 }
 #q-abbr { font-family: var(--mono); letter-spacing: 0.04em; }
-.field input::placeholder { color: var(--text-faint); }
-.field input:focus-visible,
+.field > input::placeholder { color: var(--text-faint); }
+.field > input:focus-visible,
 .icon-btn:focus-visible,
-.text-btn:focus-visible,
-.examples button:focus-visible {
+.text-btn:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
-.field input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.field > input::-webkit-search-cancel-button { -webkit-appearance: none; }
 
 .hint {
   margin: 6px 0 0;
@@ -206,47 +213,54 @@ body {
 
 .bar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 12px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   min-height: 20px;
   margin-bottom: 10px;
 }
 
 .count {
   margin: 0;
-  flex: 1 1 auto;
   font-size: 12.5px;
   color: var(--text-faint);
 }
 
 /* ---------- source filter ---------- */
 
-.dropdown { position: relative; flex: 0 0 auto; }
+.dropdown { position: relative; }
 
 .src-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 5px 9px 5px 11px;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 10px 11px 12px;
   font: inherit;
-  font-size: 13px;
-  color: var(--text-dim);
+  text-align: left;
+  color: var(--text);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   cursor: pointer;
 }
-.src-btn:hover { border-color: var(--accent); color: var(--accent); }
-.src-btn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+
+#src-summary {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.src-btn:hover { border-color: var(--accent); }
+.src-btn[aria-expanded="true"] { border-color: var(--accent); }
 .src-btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
+.src-btn.on .chev { color: var(--accent); }
 .src-btn:focus-visible,
 .src-panel input:focus-visible,
 .src-list input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 
 .src-btn .chev {
-  width: 14px; height: 14px; flex: 0 0 auto;
+  width: 16px; height: 16px; flex: 0 0 auto; color: var(--text-faint);
   fill: none; stroke: currentColor; stroke-width: 2;
   stroke-linecap: round; stroke-linejoin: round;
 }
@@ -255,9 +269,9 @@ body {
 .src-panel {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0;
   z-index: 20;
-  width: 340px;
+  width: 360px;
   max-width: calc(100vw - 32px);
   padding: 10px;
   background: var(--surface);
@@ -446,27 +460,7 @@ mark {
   font-size: 14.5px;
   padding: 6px 0 4px;
 }
-.empty p { margin: 0 0 12px; }
-
-.examples {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-}
-.examples button {
-  font: inherit;
-  font-size: 13.5px;
-  color: var(--text-dim);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  padding: 5px 12px;
-  cursor: pointer;
-}
-.examples button:hover { border-color: var(--accent); color: var(--accent); }
+.empty p { margin: 0; }
 
 .site-footer {
   margin: 34px auto 0;

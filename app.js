@@ -660,14 +660,6 @@
     els.abbr.focus();
   });
 
-  els.empty.addEventListener('click', function (ev) {
-    var b = ev.target.closest('button');
-    if (!b) return;
-    if (b.dataset.abbr) { els.abbr.value = b.dataset.abbr; els.text.value = ''; }
-    else { els.text.value = b.dataset.text; els.abbr.value = ''; }
-    run();
-  });
-
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape' && !els.srcPanel.hidden) {
       openPanel(false);
