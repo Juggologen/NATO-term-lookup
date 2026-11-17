@@ -4,6 +4,7 @@
   'use strict';
 
   var MAX_RESULTS = 60;
+  var TERM_SLOTS = 20;   // of MAX_RESULTS, held back for entries with no abbreviation
   var els = {
     abbr:    document.getElementById('q-abbr'),
     text:    document.getElementById('q-text'),
@@ -510,7 +511,7 @@
       return (entries[a].t || '').localeCompare(entries[b].t || '');
     });
 
-    render(out, qa, qt);
+    render(out, qa, qt, textActive);
   }
 
   /* ---------------- rendering ---------------- */
@@ -613,12 +614,52 @@
     return box;
   }
 
-  function render(list, qa, qt) {
+  /* A heading above a group of results, carrying how many it holds and how
+     many of those are on screen. */
+  function groupHead(label, total, shown) {
+    var h = el('h2', 'group');
+    h.appendChild(el('span', 'group-label', label));
+    h.appendChild(el('span', 'group-n',
+                     shown < total ? shown + ' of ' + total : String(total)));
+    return h;
+  }
+
+  function addCards(frag, list, from, to, terms) {
+    for (var i = from; i < to; i++) frag.appendChild(card(entries[list[i]], terms));
+  }
+
+  function render(list, qa, qt, grouped) {
     var terms = tokens(qt);
     if (qa) terms = terms.concat([fold(qa)]);
     var frag = document.createDocumentFragment();
-    var shown = Math.min(list.length, MAX_RESULTS);
-    for (var i = 0; i < shown; i++) frag.appendChild(card(entries[list[i]], terms));
+    var shown;
+
+    /* A description search returns abbreviations and plain terms together.
+       Keep the abbreviations first, under their own headings, so the two kinds
+       are never read as one list. */
+    var withAbbr = [], noAbbr = [];
+    if (grouped) {
+      for (var g = 0; g < list.length; g++) {
+        (entries[list[g]].a ? withAbbr : noAbbr).push(list[g]);
+      }
+    }
+
+    if (grouped && withAbbr.length && noAbbr.length) {
+      /* Reserve part of the cap for the terms, or a long run of
+         abbreviations would push them off the page entirely. */
+      var showT = Math.min(noAbbr.length,
+                           Math.max(MAX_RESULTS - withAbbr.length, TERM_SLOTS));
+      var showA = Math.min(withAbbr.length, MAX_RESULTS - showT);
+      frag.appendChild(groupHead('Abbreviations', withAbbr.length, showA));
+      addCards(frag, withAbbr, 0, showA, terms);
+      frag.appendChild(groupHead('Terms', noAbbr.length, showT));
+      addCards(frag, noAbbr, 0, showT, terms);
+      shown = showA + showT;
+    } else {
+      shown = Math.min(list.length, MAX_RESULTS);
+      addCards(frag, list, 0, shown, terms);
+    }
+
     els.results.textContent = '';
     els.results.appendChild(frag);
 

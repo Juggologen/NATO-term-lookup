@@ -14,7 +14,13 @@ phone and it works with no signal.
 | Field | What to type | What you get |
 | --- | --- | --- |
 | **Abbreviation** | `CIMIC`, `rOE`, partial forms like `MEDE` | Every sense of that abbreviation, exact matches first |
-| **Term or description** | The proper term, or plain words | Ranked candidate entries |
+| **Term or description** | The proper term, or plain words | Ranked candidate entries, abbreviations first |
+
+A description search returns two kinds of entry, and keeps them apart under
+their own headings: **Abbreviations** first, then **Terms** — glossary entries
+that carry no abbreviation. Each heading shows how many that group holds. Part
+of the on-screen limit is reserved for the terms, so a long run of
+abbreviations cannot push them off the page.
 
 Fill in both fields to narrow results to entries matching both. `/` jumps to the
 abbreviation field, `Esc` clears the focused field. The theme follows the

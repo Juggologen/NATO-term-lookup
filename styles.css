@@ -371,6 +371,37 @@ body {
 
 .results { outline: none; }
 
+/* Group headings in a description search: abbreviations above, terms below,
+   with a rule marking the change. */
+.group {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.results > .group:first-child { margin-top: 2px; }
+
+.entry + .group {
+  margin-top: 24px;
+  padding-top: 17px;
+  border-top: 1px solid var(--line);
+}
+
+.group-n {
+  flex: none;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-faint);
+}
+
 .entry {
   background: var(--surface);
   border: 1px solid var(--line);
