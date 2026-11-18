@@ -30,8 +30,21 @@ NOISE_RE = re.compile(r'^\s*(\d+\s+)?(available at|the lexicon contains|a more\b
                       r'this publication is available|part\s*[12i]+\b)', re.I)
 ENTRY_RE = re.compile(r'^(?P<ind>\s*)(?P<abbr>[A-Za-z0-9][A-Za-z0-9&/()\-.\'+]{0,19})'
                       r'\s{2,}(?P<rest>\S.*?)\s*$')
-STATUS_TAIL_RE = re.compile(r'\s*\((?P<s>[^()]{1,60})\)\s*$')
+STATUS_TAIL_RE = re.compile(r'\s*\((?P<s>[^()]*(?:\([^()]*\)[^()]*)*)\)\s*$')
+# A block opening with "2." or "3." is the next sense of the term above it, not
+# a term of its own. Senses are often split across a page break.
+SENSE_RE = re.compile(r'^\d{1,2}\.\s')
 HAS_LOWER_WORD = re.compile(r'[a-z]{2,}')
+# A page footer can put several furniture tokens on one line ("LEX-9
+# Edition C Version 1"), which FURNITURE_RE, anchored to the whole line,
+# does not catch. Strip the tokens and see whether anything is left.
+FURNITURE_TOKEN_RE = re.compile(
+    r'(lex-\s*\d+|edition\s+[a-z]\s+version\s+\d+(\s*\+\s*\S+)?|lexicon(\s+to)?|'
+    r'ajp-[0-9.]+(\([a-z]\))?(\(\d\))?|\d+|intentionally blank)', re.I)
+
+
+def is_furniture(line):
+    return not FURNITURE_TOKEN_RE.sub(' ', line).strip()
 
 
 def text_of(pdf, cache_dir):
@@ -66,9 +79,23 @@ def blocks(region):
 
 
 def parse_terms(region, consumed):
-    out = []
+    # Gather the blocks first, joining each run of sense blocks onto the term
+    # they continue, so a multi-sense entry stays one candidate.
+    cands = []
     for start, blk in blocks(region):
-        blk = [l for l in blk if not FURNITURE_RE.match(l) and not NOISE_RE.match(l)]
+        blk = [l for l in blk if not FURNITURE_RE.match(l) and not NOISE_RE.match(l)
+               and not is_furniture(l)]
+        if not blk:
+            continue
+        if SENSE_RE.match(blk[0]) and cands:
+            cands[-1]['lines'] += blk
+            cands[-1]['spans'].append((start, len(blk)))
+            continue
+        cands.append({'lines': blk, 'spans': [(start, len(blk))]})
+
+    out = []
+    for c in cands:
+        blk = c['lines']
         if len(blk) < 2:
             continue
         # A two-column line is an abbreviation row, not a term heading.
@@ -77,7 +104,7 @@ def parse_terms(region, consumed):
         term = re.sub(r'\s+', ' ', blk[0]).strip()
         body = re.sub(r'\s+', ' ', ' '.join(blk[1:])).strip()
         m = STATUS_TAIL_RE.search(body)
-        if not m:
+        if not m or not (0 < len(m.group('s').strip()) <= 70):
             continue                       # only trust blocks that carry a status
         status = m.group('s').strip()
         definition = body[:m.start()].strip()
@@ -86,8 +113,9 @@ def parse_terms(region, consumed):
         if not HAS_LOWER_WORD.search(term):
             continue
         out.append({'term': term, 'definition': definition, 'status': status})
-        for j in range(start, start + len(blk) + 1):
-            consumed.add(j)
+        for start, n in c['spans']:
+            for j in range(start, start + n + 1):
+                consumed.add(j)
     return out
 
 
@@ -131,7 +159,9 @@ def parse_abbrs(region, consumed):
         # paragraph list markers ("a.", "n", "A.1") that look like a column.
         if len(abbr) < 2 or not re.search(r'[A-Z0-9]', abbr):
             continue
-        if re.fullmatch(r'[A-Za-z]\.?\d*(\.\d+)*', abbr):
+        # "a.", "A.1", "b.2.3" are paragraph list markers. A letter followed
+        # by bare digits is a real abbreviation (C2, C3, A2), so keep those.
+        if re.fullmatch(r'[A-Za-z]\.(\d+(\.\d+)*)?', abbr):
             continue
         if re.fullmatch(r'[\d.]+', abbr):
             continue

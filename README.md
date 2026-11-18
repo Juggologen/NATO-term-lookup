@@ -52,7 +52,7 @@ searches offline.
 
 ## What is in the data
 
-`data/terms.json` holds **8,003 entries** from three published NATO sources.
+`data/terms.json` holds **8,005 entries** from three published NATO sources.
 
 | Source | Content | Entries |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ searches offline.
 | **AAP-06** — NATO Glossary of Terms and Definitions (2019) | Term → definition | 2,507 |
 | **AJP lexicons** — the Lexicon of 32 Allied Joint Publications, current editions | Doctrine abbreviations and terms | 971 |
 
-5,250 entries carry an abbreviation and 3,186 carry a definition.
+5,250 entries carry an abbreviation and 3,188 carry a definition.
 
 The two AAP glossaries are published by the NATO Standardization Office. The
 AAP-15 content is a NATOTerm extract dated 15 April 2026; AAP-06 ceased
@@ -70,8 +70,8 @@ the last full one and some definitions are older than the abbreviation list.
 **The AJP lexicons matter.** The AAP glossaries do not carry most operational
 planning vocabulary — MAOP, AOD, GAT, JPTL, JTL, NSL, TNL, CPOE and COPD are all
 absent from AAP-15. They live in the lexicons of the Allied Joint Publications,
-which is where this build gets them: 725 abbreviations and 246 terms that appear
-in no AAP glossary. A further 601 AAP entries gained a publication reference,
+which is where this build gets them: 725 abbreviations and 248 terms that appear
+in no AAP glossary. A further 608 AAP entries gained a publication reference,
 shown on the card as tags like `AJP-3.3`, so you can see which doctrine uses a
 term and how widely.
 

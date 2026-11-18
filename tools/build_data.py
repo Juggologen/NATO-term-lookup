@@ -160,7 +160,7 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
                                 {'abbr': a['abbr'], 'full': a['full'], 'codes': []}
                                 )['codes'].append(code)
         for t in pub['terms']:
-            ajp_term.setdefault(skey(t['term']),
+            ajp_term.setdefault(key(t['term']),
                                 {'term': t['term'], 'definition': t['definition'],
                                  'status': t['status'], 'codes': []}
                                 )['codes'].append(code)
@@ -188,8 +188,14 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
         added_abbr += 1
 
     added_term = reffed_term = 0
-    for sk, rec in sorted(ajp_term.items()):
-        hit = next((e for e in by_term.get(sk, []) if e.get('d')), None)
+    for _k, rec in sorted(ajp_term.items()):
+        sk = skey(rec['term'])
+        pool = [e for e in by_term.get(sk, []) if e.get('d')]
+        # Prefer the entry whose term is spelled the same; the stem key alone
+        # would hand "targeting" to "target".
+        hit = next((e for e in pool if key(e['t']) == key(rec['term'])), None)
+        if hit is None:
+            hit = pool[0] if pool else None
         if hit is not None:
             hit.setdefault('p', [])
             for c in rec['codes']:
