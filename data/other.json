@@ -1,0 +1,45 @@
+{
+  "_comment": "A working list of terms met in practice that the published glossaries do not carry, supplied by the person who uses this app. They are NOT NATO-agreed terminology: the app labels them 'Other' so they are never mistaken for an official entry. An entry whose abbreviation and term already exist in an official source is dropped at build time rather than duplicated.",
+  "entries": [
+    {
+      "a": "RR&A",
+      "t": "Risk Reduction and Assessment",
+      "alt": ["Research and Analysis", "Readiness, Response and Assurance"],
+      "n": [
+        "The source list records three readings and does not say which is meant; take it from the context.",
+        "Used as in \"the CFACC delegates RR&A to ...\"."
+      ]
+    },
+    { "a": "FoN", "t": "Freedom of Navigation" },
+    { "a": "OO", "t": "Operational Objective" },
+    { "a": "WoE", "t": "Weight of Effort" },
+    { "a": "AMRL", "t": "Accepted Mission Risk Level" },
+    { "a": "ME", "t": "Main effort" },
+    { "a": "I.A.W", "t": "In Accordance With" },
+    {
+      "a": null,
+      "t": "Bastion Land",
+      "g": ["meaning not recorded"]
+    },
+    {
+      "a": "SoM",
+      "t": "",
+      "g": ["meaning not recorded"]
+    },
+    {
+      "a": "ACMREQs",
+      "t": "Air, Land, and Maritime Airspace Requirements",
+      "n": ["AAP-15 records the singular ACMREQ as airspace control means request."]
+    },
+    { "a": "D&G", "t": "Direction and Guidance" },
+    {
+      "a": "G2M",
+      "t": "GAT to MAOP",
+      "n": ["GAT is guidance, apportionment and targeting; MAOP is the master air operations plan. Both are in this lookup."]
+    },
+    { "a": "RESALLOC", "t": "Resource Allocation" },
+    { "a": "NKOD", "t": "Non-Kinetic Ops Division" },
+    { "a": "MCI", "t": "Mission Critical Information" },
+    { "a": "PM", "t": "Planning Meeting" }
+  ]
+}

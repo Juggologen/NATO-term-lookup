@@ -154,7 +154,8 @@
       /* How well attested a sense is: whether it carries a definition and how
          many publications use it. Breaks ties between senses of the same
          abbreviation so the one in current use comes first. */
-      prominence[i] = (e.d ? 1 : 0) + (e.p ? e.p.length : 0);
+      prominence[i] = (e.d ? 1 : 0) + (e.p ? e.p.length : 0) +
+                      (e.s === 'OTHER' || e.s === 'LOCAL' ? 2 : 0);
     }
 
     avgBody = Math.max(1, bodyTotal / entries.length);
@@ -189,6 +190,7 @@
     'AAP-06': 'Glossary of terms and definitions',
     'AJP': 'Any Allied Joint Publication',
     'COMMON': 'Common usage, not an official source',
+    'OTHER': 'Met in practice, not from a published glossary',
     'LOCAL': 'Added by you, held in this browser'
   };
 
@@ -208,9 +210,10 @@
       }
     }
     sources = [];
-    ['AAP-15', 'AAP-06', 'COMMON'].forEach(function (id) {
+    var CODE = { 'COMMON': 'Common', 'OTHER': 'Other' };
+    ['AAP-15', 'AAP-06', 'COMMON', 'OTHER'].forEach(function (id) {
       if (counts[id]) {
-        sources.push({ id: id, code: id === 'COMMON' ? 'Common' : id,
+        sources.push({ id: id, code: CODE[id] || id,
                        name: SRC_META[id], count: counts[id], group: 'glossary' });
       }
     });
@@ -459,6 +462,7 @@
   function searchAbbr(query, scores, touched, textActive) {
     var q = normAbbr(query);
     if (!q) return 0;
+    var raw = query.trim().toUpperCase();
     for (var i = 0; i < entries.length; i++) {
       var keys = abbrKeys[i], best = 0;
       for (var k = 0; k < keys.length; k++) {
@@ -469,6 +473,9 @@
         if (k > 0 && s > 0) s -= 40;          /* variants rank just below */
         if (s > best) best = s;
       }
+      /* Punctuation is stripped before matching, so "D&G" and "DG" look alike.
+         Favour the entry spelled the way the person typed it. */
+      if (best > 0 && entries[i].a && entries[i].a.toUpperCase() === raw) best += 25;
       if (best > 0) {
         if (scores[i] === 0 && !textActive) touched.push(i);
         if (textActive) { if (scores[i] > 0) scores[i] += best; else scores[i] = -1; }
@@ -582,7 +589,7 @@
 
   var SRC_LABEL = { 'AAP-15': 'AAP-15', 'AAP-06': 'AAP-06',
                     'AJP': 'AJP lexicon', 'COMMON': 'Common usage',
-                    'LOCAL': 'Added by you' };
+                    'OTHER': 'Other', 'LOCAL': 'Added by you' };
 
   function card(e, terms) {
     var box = el('article', 'entry');
@@ -621,7 +628,8 @@
     if (e.g) for (var g = 0; g < e.g.length; g++) {
       meta.appendChild(el('span', 'tag tag-flag', e.g[g]));
     }
-    meta.appendChild(el('span', 'tag tag-src' + (e.s === 'COMMON' ? ' tag-common' : '') +
+    meta.appendChild(el('span', 'tag tag-src' +
+                        (e.s === 'COMMON' || e.s === 'OTHER' ? ' tag-common' : '') +
                         (e.s === 'LOCAL' ? ' tag-local' : ''),
                         SRC_LABEL[e.s] || e.s));
     if (e.p) {

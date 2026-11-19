@@ -66,11 +66,12 @@ def attach(entries, spec, field, value_key):
 
 
 def main(aap15_path, aap06_path, ajp_path, out_path,
-         supp_path=None, alias_path=None):
+         supp_path=None, alias_path=None, other_path=None):
     a15 = json.load(open(aap15_path, encoding='utf-8'))
     a06 = json.load(open(aap06_path, encoding='utf-8'))
     ajp = json.load(open(ajp_path, encoding='utf-8')) if ajp_path else []
     supp = json.load(open(supp_path, encoding='utf-8')) if supp_path else {'entries': []}
+    other = json.load(open(other_path, encoding='utf-8')) if other_path else {'entries': []}
     aliases = json.load(open(alias_path, encoding='utf-8')) if alias_path else {}
 
     defs = {}
@@ -225,6 +226,28 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
         by_abbr.setdefault(up, []).append(e)
         supp_kept += 1
 
+    # A working list of terms met in practice, kept apart under its own
+    # source so it is never read as published terminology. Same rule as the
+    # supplementary list: an entry an official source already carries, with
+    # the same meaning, is dropped rather than shown twice.
+    other_kept = other_dropped = 0
+    for r in other.get('entries', []):
+        up, sk = (r.get('a') or '').upper(), skey(r.get('t') or '')
+        if r.get('t') and any(skey(x['t']) == sk for x in by_abbr.get(up, [])):
+            other_dropped += 1
+            continue
+        e = dict(r)
+        e['s'] = 'OTHER'
+        # Carry over the published definition when the term is one the
+        # glossaries already define, e.g. ME for main effort.
+        if not e.get('d'):
+            match = next((x for x in by_term.get(sk, []) if x.get('d')), None)
+            if match:
+                e['d'] = match['d']
+        entries.append(e)
+        by_abbr.setdefault(up, []).append(e)
+        other_kept += 1
+
     alias_hits = attach(entries, aliases, 'k', 'k')
 
     # Short, human titles for the publication filter, e.g.
@@ -249,6 +272,8 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
              'note': 'Edition 2019'},
             {'id': 'AJP', 'title': 'Allied Joint Publication lexicons',
              'note': '32 publications, current editions'},
+            {'id': 'OTHER', 'title': 'Other',
+             'note': 'Met in practice, not from a published glossary'},
         ],
         'publications': pubs,
         'entries': entries,
@@ -262,6 +287,7 @@ def main(aap15_path, aap06_path, ajp_path, out_path,
     print(f'  AJP: new abbreviations={added_abbr} new terms={added_term} '
           f'cross-referenced onto existing={reffed_abbr + reffed_term}')
     print(f'  supplementary: kept={supp_kept} dropped_as_covered={supp_dropped}')
+    print(f'  other: kept={other_kept} dropped_as_covered={other_dropped}')
     print(f'  keywords: aliases={alias_hits}')
 
 

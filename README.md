@@ -69,7 +69,7 @@ searches offline.
 
 ## What is in the data
 
-`data/terms.json` holds **8,005 entries** from three published NATO sources.
+`data/terms.json` holds **8,020 entries** from three published NATO sources.
 
 | Source | Content | Entries |
 | --- | --- | --- |
@@ -77,7 +77,7 @@ searches offline.
 | **AAP-06** — NATO Glossary of Terms and Definitions (2019) | Term → definition | 2,507 |
 | **AJP lexicons** — the Lexicon of 32 Allied Joint Publications, current editions | Doctrine abbreviations and terms | 971 |
 
-5,250 entries carry an abbreviation and 3,188 carry a definition.
+5,264 entries carry an abbreviation and 3,189 carry a definition.
 
 The two AAP glossaries are published by the NATO Standardization Office. The
 AAP-15 content is a NATOTerm extract dated 15 April 2026; AAP-06 ceased
@@ -107,7 +107,7 @@ the French abbreviation are re-keyed to their English abbreviation on build, so
 
 ### Unofficial additions
 
-Two small layers are **not** NATO terminology. They exist so the search can be
+Three small layers are **not** NATO terminology. They exist so the search can be
 driven in everyday language, and the app labels them:
 
 - `data/supplementary.json` — abbreviations in common use that none of the
@@ -115,10 +115,18 @@ driven in everyday language, and the app labels them:
   **Common usage** tag. Entries here are dropped automatically if a source
   later covers them, which is what happened to IFF, LNO, LOGREP, PSYOPS,
   STRATCOM and UAS once the AJP lexicons were added — 8 remain.
+- `data/other.json` — a working list of terms met in practice that no published
+  glossary carries (FoN, AMRL, G2M, RESALLOC and similar). Shown with an
+  **Other** tag and gathered under **Other** in the source filter. Dropped
+  automatically if an official source already gives the same abbreviation the
+  same meaning, which is what happened to D&G, already in the AJP-5 lexicon —
+  15 remain.
 - `data/aliases.json` — plain-language English phrases ("roadside bomb" → IED)
-  for 93 entries. Used for searching only; not displayed.
+  for 94 entries. Used for searching only; not displayed.
 
-Both are plain JSON and are meant to be extended — see below.
+All three are plain JSON and are meant to be extended — see below. Entries in
+`other.json` and the terms you add in the app rank first among equally good
+matches: they are the ones their owner actually meets.
 
 ## How well does the description search work?
 
@@ -156,7 +164,7 @@ After editing, rebuild `data/terms.json`:
 
 ```bash
 python3 tools/build_data.py parsed/aap15.json parsed/aap06.json parsed/ajp_lex.json \
-        data/terms.json data/supplementary.json data/aliases.json
+        data/terms.json data/supplementary.json data/aliases.json data/other.json
 ```
 
 Then bump `CACHE` in `sw.js` so installed copies pick up the new file.
@@ -184,7 +192,7 @@ Then merge everything:
 
 ```bash
 python3 tools/build_data.py parsed/aap15.json parsed/aap06.json parsed/ajp_lex.json \
-        data/terms.json data/supplementary.json data/aliases.json
+        data/terms.json data/supplementary.json data/aliases.json data/other.json
 ```
 
 The AAP-15 parser reads the PDF's typography rather than its text: bold marks a
