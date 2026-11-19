@@ -31,6 +31,19 @@
   --shadow-panel: 0 4px 16px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
   --edge: 0 0 0 rgba(0, 0, 0, 0);
 
+  /* Glass. The tint is the surface it stands in for, so the material is
+     invisible over a plain canvas and only shows when something passes
+     under it. The border alpha is set by contrast, not by taste: 3.34:1
+     against the canvas, which is what a blurred panel needs to stay a
+     readable edge over whatever shows through. */
+  --glass-canvas: rgba(246, 247, 249, 0.68);
+  --glass-fill:   rgba(255, 255, 255, 0.64);
+  --glass-line:   rgba(21, 24, 29, 0.50);
+  --glass-spec:   rgba(255, 255, 255, 0.75);
+  --glass-under:  rgba(21, 24, 29, 0.06);
+  --glass-blur:   blur(24px) saturate(180%);
+  --glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+
   /* spacing: 8pt for structure, 4pt for micro */
   --space-1: 4px;
   --space-2: 8px;
@@ -63,11 +76,13 @@
   --motion-100: 100ms;
   --motion-150: 150ms;
   --motion-200: 200ms;
+  --motion-300: 300ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in:  cubic-bezier(0.7, 0, 0.84, 0);
 
   --radius: 10px;
   --radius-sm: 6px;
+  --radius-bar: 999px;
   --hit: 44px;
   --bar-h: 60px;
   --mode-w: 168px;
@@ -99,6 +114,13 @@
     --shadow-soft:  0 0 0 rgba(0, 0, 0, 0);
     --shadow-panel: 0 6px 20px rgba(0, 0, 0, 0.45);
     --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --glass-canvas: rgba(18, 20, 25, 0.68);
+    --glass-fill:   rgba(25, 28, 34, 0.64);
+    --glass-line:   rgba(231, 234, 239, 0.42);
+    --glass-spec:   rgba(255, 255, 255, 0.14);
+    --glass-under:  rgba(0, 0, 0, 0.30);
+    --glass-blur:   blur(24px) saturate(180%);
+    --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   }
 }
 
@@ -124,9 +146,34 @@
   --shadow-soft:  0 0 0 rgba(0, 0, 0, 0);
   --shadow-panel: 0 6px 20px rgba(0, 0, 0, 0.45);
   --edge: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    --glass-canvas: rgba(18, 20, 25, 0.68);
+  --glass-fill:   rgba(25, 28, 34, 0.64);
+  --glass-line:   rgba(231, 234, 239, 0.42);
+  --glass-spec:   rgba(255, 255, 255, 0.14);
+  --glass-under:  rgba(0, 0, 0, 0.30);
+  --glass-blur:   blur(24px) saturate(180%);
+  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 * { box-sizing: border-box; }
+
+/* The theme crossfade runs only while the theme is actually changing. A
+   standing transition on every element would make hover feel slow and would
+   fire once on first paint. app.js adds the class, then drops it. */
+:root.theming,
+:root.theming *,
+:root.theming *::before,
+:root.theming *::after {
+  transition:
+    background-color var(--motion-300) var(--ease-out),
+    border-color     var(--motion-300) var(--ease-out),
+    color            var(--motion-300) var(--ease-out),
+    fill             var(--motion-300) var(--ease-out),
+    stroke           var(--motion-300) var(--ease-out),
+    box-shadow       var(--motion-300) var(--ease-out),
+    opacity          var(--motion-300) var(--ease-out),
+    transform        var(--motion-300) var(--ease-out) !important;
+}
 
 /* Class-level display rules would otherwise beat the hidden attribute. */
 [hidden] { display: none !important; }
@@ -228,12 +275,21 @@ body[data-view="start"] .brand { visibility: hidden; }
 .icon-btn:hover { color: var(--text); background: var(--l1); border-color: var(--line-soft); }
 .icon-btn-sm { min-width: var(--hit); min-height: var(--hit); }
 
-.i-moon { display: none; }
-:root[data-theme="dark"] .i-sun { display: none; }
-:root[data-theme="dark"] .i-moon { display: block; }
+/* Both marks are always present and stacked; the theme turns one into the
+   other rather than swapping them. */
+#theme { position: relative; }
+#theme svg {
+  position: absolute; top: 50%; left: 50%; margin: -10px 0 0 -10px;
+  transition: opacity var(--motion-200) var(--ease-out),
+              transform var(--motion-200) var(--ease-out);
+}
+.i-sun  { opacity: 1; transform: rotate(0deg) scale(1); }
+.i-moon { opacity: 0; transform: rotate(-90deg) scale(0.5); }
+:root[data-theme="dark"] .i-sun  { opacity: 0; transform: rotate(90deg) scale(0.5); }
+:root[data-theme="dark"] .i-moon { opacity: 1; transform: rotate(0deg) scale(1); }
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .i-sun { display: none; }
-  :root:not([data-theme="light"]) .i-moon { display: block; }
+  :root:not([data-theme="light"]) .i-sun  { opacity: 0; transform: rotate(90deg) scale(0.5); }
+  :root:not([data-theme="light"]) .i-moon { opacity: 1; transform: rotate(0deg) scale(1); }
 }
 
 .link-btn {
@@ -261,7 +317,14 @@ body[data-view="start"] .brand { visibility: hidden; }
 
 /* ---------- search console ---------- */
 
-.console { position: sticky; top: 0; z-index: 20; background: var(--l0); }
+/* The strip is glass too, not just the bar: it is what the results pass
+   under, and a transparent strip would show them raw either side of the bar. */
+.console {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--glass-canvas);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
 body[data-view="results"] .console,
 body[data-view="lexicon"] .console {
   --bar-h: 48px;
@@ -294,16 +357,23 @@ body:not([data-view="start"]) .search { margin-top: var(--space-3); }
   font-weight: var(--w-medium); color: var(--text-faint);
   letter-spacing: 0.02em; text-transform: uppercase;
 }
-.search-head label:first-child { padding-left: var(--space-4); }
+.search-head label:first-child { padding-left: var(--space-6); }
 .search-head label:last-child  { padding-left: var(--space-8); }
 
 .search-bar {
   display: grid; grid-template-columns: var(--mode-w) auto 1fr auto;
   align-items: center;
   min-height: var(--bar-h);
-  background: var(--l1);
-  border: 1px solid var(--line); border-radius: var(--radius);
-  box-shadow: var(--shadow-soft), var(--edge);
+  background: var(--glass-fill);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--radius-bar);
+  /* outer lift, then the specular line along the top edge and a shade
+     under the lower one: that pair is what gives the material thickness */
+  box-shadow: var(--glass-shadow),
+              inset 0 1px 0 var(--glass-spec),
+              inset 0 -1px 0 var(--glass-under);
 }
 .search-bar:focus-within {
   border-color: var(--accent);
@@ -319,11 +389,11 @@ body:not([data-view="start"]) .search { margin-top: var(--space-3); }
 .mode select {
   appearance: none; -webkit-appearance: none;
   width: 100%; min-height: var(--hit);
-  padding: 0 var(--space-8) 0 var(--space-4);
+  padding: 0 var(--space-8) 0 var(--space-6);
   font: var(--w-medium) var(--text-secondary)/1 var(--sans);
   color: var(--text); background: transparent;
   border: 0; border-right: 1px solid var(--line-soft);
-  border-radius: var(--radius) 0 0 var(--radius);
+  border-radius: var(--radius-bar) 0 0 var(--radius-bar);
   cursor: pointer;
 }
 .mode .chev {
@@ -341,7 +411,7 @@ body:not([data-view="start"]) .search { margin-top: var(--space-3); }
 }
 .search-bar input::placeholder { color: var(--text-faint); }
 .search-bar input::-webkit-search-cancel-button { display: none; }
-#q-clear { margin-right: var(--space-1); }
+#q-clear { margin-right: var(--space-2); }
 
 .hint {
   margin: var(--space-2) 0 0;
@@ -601,7 +671,19 @@ mark { background: var(--mark); color: inherit; border-radius: 3px; padding: 0 1
   .form-foot .btn { flex: 1 1 140px; }
 }
 
+/* Without the blur the tints are simply see-through, so this falls back to
+   the solid surfaces rather than to a washed-out panel. */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .console { background: var(--l0); }
+  .search-bar { background: var(--l1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  :root.theming,
+  :root.theming *,
+  :root.theming *::before,
+  :root.theming *::after { transition: none !important; }
+  #theme svg { transition: opacity var(--motion-100) ease; transform: none !important; }
   .src-panel, .dialog[open] { animation: fade var(--motion-100) ease; }
   @keyframes fade { from { opacity: 0; } }
 }

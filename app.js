@@ -119,8 +119,26 @@
     els.theme.setAttribute('aria-label', text);
     els.theme.setAttribute('title', text);
   }
+  /* Carry the change across rather than cutting to it. The transition lives
+     on a class so it is only ever on during the switch itself: left standing,
+     it would slow every hover and fire once on first paint. */
+  var themeTimer = 0;
+  function crossfade() {
+    if (window.matchMedia &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var root = document.documentElement;
+    root.classList.add('theming');
+    /* Read a layout value to settle the style with the transition in place.
+       Without it the class and the new theme land in one recalculation,
+       there is no earlier state to move from, and the colours jump. */
+    void root.offsetWidth;
+    clearTimeout(themeTimer);
+    themeTimer = setTimeout(function () { root.classList.remove('theming'); }, 360);
+  }
+
   els.theme.addEventListener('click', function () {
     var next = currentTheme() === 'dark' ? 'light' : 'dark';
+    crossfade();
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('theme', next); } catch (e) { /* private mode */ }
     labelTheme();
