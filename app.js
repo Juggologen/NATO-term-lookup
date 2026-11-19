@@ -58,6 +58,45 @@
     localMsg: document.getElementById('local-msg')
   };
 
+  var RELOAD_KEY = 'nato-lookup.reload';
+
+  /* The markup and this script have to come from the same deploy. When a
+     cache has mixed two of them every lookup above is null, the page looks
+     right and nothing on it responds, and it stays that way on every later
+     visit. Throw the cache away and come back once instead. */
+  function recover(missing) {
+    /* Once only. If the fresh copy is broken too, leave the page alone
+       rather than reload for ever. */
+    try {
+      if (sessionStorage.getItem(RELOAD_KEY) === '1') return;
+      sessionStorage.setItem(RELOAD_KEY, '1');
+    } catch (e) {
+      return;                      /* no session storage: do not risk a loop */
+    }
+    if (window.console) {
+      console.warn('NATO Term Lookup: the page and the script are from ' +
+                   'different versions (missing ' + missing.join(', ') + '). ' +
+                   'Clearing the cache and reloading.');
+    }
+    var jobs = [];
+    if (window.caches) {
+      jobs.push(caches.keys().then(function (keys) {
+        return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+      }));
+    }
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      jobs.push(navigator.serviceWorker.getRegistrations().then(function (regs) {
+        return Promise.all(regs.map(function (r) { return r.unregister(); }));
+      }));
+    }
+    Promise.all(jobs).catch(function () {}).then(function () { location.reload(); });
+  }
+
+  var missing = [];
+  for (var elKey in els) { if (!els[elKey]) missing.push(elKey); }
+  if (missing.length) { recover(missing); return; }
+  try { sessionStorage.removeItem(RELOAD_KEY); } catch (e) { /* private mode */ }
+
   function el(tag, cls, text) {
     var n = document.createElement(tag);
     if (cls) n.className = cls;
@@ -1383,6 +1422,17 @@
     });
 
   if ('serviceWorker' in navigator) {
+    /* A new worker taking charge means the files this page is running came
+       from the deploy before it. Come back once so the two match. Only when
+       a worker was already in charge: the very first registration fires this
+       as well, and there is nothing to reload for. */
+    var hadWorker = !!navigator.serviceWorker.controller;
+    var reloading = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function () {
+      if (!hadWorker || reloading) return;
+      reloading = true;
+      location.reload();
+    });
     window.addEventListener('load', function () {
       navigator.serviceWorker.register('sw.js').catch(function () { /* offline use unavailable */ });
     });
