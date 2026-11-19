@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>NATO Term Lookup</title>
-<meta name="description" content="Offline quick reference for NATO abbreviations and terms, from AAP-15 and AAP-06.">
-<meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#14171c" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Offline quick reference for NATO abbreviations and terms, from AAP-15, AAP-06 and the Allied Joint Publication lexicons.">
+<meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121419" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -19,16 +19,14 @@ try {
 } catch (e) {}
 </script>
 </head>
-<body>
-<a class="skip" href="#results">Skip to results</a>
+<body data-view="start">
+<a class="skip" href="#main">Skip to main content</a>
 
 <header class="topbar">
-  <div class="wrap topbar-inner">
-    <div class="brand">
-      <h1>NATO Term Lookup</h1>
-      <p class="tagline">For everyone who thinks NATO should get their shit together</p>
-    </div>
-    <button id="theme" class="icon-btn" type="button" aria-label="Switch colour theme">
+  <div class="topbar-inner">
+    <a class="brand" href="#/">NATO Term Lookup</a>
+    <button id="theme" class="icon-btn" type="button"
+            aria-label="Switch colour theme" title="Switch colour theme">
       <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
         <circle cx="12" cy="12" r="4.2"/>
         <path d="M12 2.5v2.6M12 18.9v2.6M4.2 12H1.6M22.4 12h-2.6M6.5 6.5 4.6 4.6M19.4 19.4l-1.9-1.9M17.5 6.5l1.9-1.9M4.6 19.4l1.9-1.9"/>
@@ -40,110 +38,184 @@ try {
   </div>
 </header>
 
-<main class="wrap">
-  <section class="search" aria-label="Search">
-    <div class="field">
-      <label for="q-abbr">Abbreviation</label>
-      <input id="q-abbr" type="search" autocomplete="off" autocapitalize="characters"
-             spellcheck="false" placeholder="OPORD" enterkeyhint="search">
-      <p class="hint">Type the short form to get the full term.</p>
-    </div>
-    <div class="field">
-      <label for="q-text">Term or description</label>
-      <input id="q-text" type="search" autocomplete="off" spellcheck="false"
-             placeholder="order telling units what to do" enterkeyhint="search">
-      <p class="hint">Describe it in plain words to find the abbreviation.</p>
-    </div>
-    <div class="field">
-      <label for="src-btn">Source</label>
-      <div class="dropdown">
-        <button id="src-btn" class="src-btn" type="button" aria-expanded="false"
-                aria-controls="src-panel">
-          <span id="src-summary">All sources</span>
-          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-        </button>
-        <div id="src-panel" class="src-panel" hidden>
-          <input id="src-search" type="search" autocomplete="off" spellcheck="false"
-                 placeholder="Find a source…" aria-label="Find a source">
-          <div class="src-actions">
-            <button id="src-all" class="text-btn" type="button">Select all</button>
-            <button id="src-none" class="text-btn" type="button">Clear selection</button>
-          </div>
-          <ul id="src-list" class="src-list" aria-label="Sources"></ul>
-          <p id="src-empty" class="src-none" hidden>No source matches that.</p>
-        </div>
-      </div>
-      <p class="hint">Narrow results to chosen glossaries or publications.</p>
-    </div>
-  </section>
+<main id="main" class="page" tabindex="-1">
 
-  <div class="bar">
-    <p id="count" class="count" role="status" aria-live="polite"></p>
-    <div class="bar-actions">
-      <button id="add-btn" class="text-btn" type="button" aria-expanded="false"
-              aria-controls="add-panel">Add a term</button>
-      <button id="clear" class="text-btn" type="button" hidden>Clear</button>
+  <!-- Search console: one bar, mode selector on the left. Large on the
+       landing view, compact and sticky once there is something to read. -->
+  <div class="console">
+    <div class="col">
+      <div class="hero">
+        <h1 class="hero-title">NATO Term Lookup</h1>
+        <p class="hero-sub">For everyone who thinks NATO should get their shit together.</p>
+      </div>
+
+      <form class="search" role="search" autocomplete="off" novalidate>
+        <div class="search-head">
+          <label for="mode">Search by</label>
+          <label for="q">Search</label>
+        </div>
+        <div class="search-bar">
+          <div class="mode">
+            <select id="mode" name="mode">
+              <option value="abbr">Abbreviation</option>
+              <option value="def">Definition</option>
+            </select>
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </div>
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="11" cy="11" r="6.4"/><path d="m15.8 15.8 4.4 4.4"/>
+          </svg>
+          <input id="q" type="search" name="q" spellcheck="false"
+                 autocapitalize="characters" enterkeyhint="search"
+                 placeholder="OPORD" aria-describedby="q-hint">
+          <button id="q-clear" class="icon-btn icon-btn-sm" type="button" hidden
+                  aria-label="Clear the search" title="Clear the search">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/>
+            </svg>
+          </button>
+        </div>
+        <p id="q-hint" class="hint">Type the short form to get the full term. Press <kbd>/</kbd> to come back here.</p>
+      </form>
+
+      <nav class="start-actions" aria-label="Other ways in">
+        <a class="btn btn-quiet" href="#/lexicon">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H19v16H5.5A1.5 1.5 0 0 1 4 18.5zM8 4v16"/>
+          </svg>
+          Browse the full lexicon
+        </a>
+        <a class="btn btn-quiet" href="#/add">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 5.5v13M5.5 12h13"/>
+          </svg>
+          Add a term
+        </a>
+      </nav>
     </div>
   </div>
 
-  <section id="add-panel" class="addform" hidden aria-labelledby="add-title">
-    <h2 id="add-title" class="addform-title">Add a term</h2>
-    <div class="addform-grid">
-      <div class="field">
-        <label for="f-abbr">Abbreviation</label>
-        <input id="f-abbr" type="text" autocomplete="off" autocapitalize="characters"
-               spellcheck="false" placeholder="MAOP" maxlength="40">
-        <p class="hint">Optional.</p>
-      </div>
-      <div class="field">
-        <label for="f-term">Term</label>
-        <input id="f-term" type="text" autocomplete="off" spellcheck="false"
-               placeholder="master air operations plan" maxlength="200">
-        <p class="hint">Required.</p>
+  <div class="col">
+
+    <div class="view-head">
+      <h2 id="lex-title" class="view-title">The full lexicon</h2>
+      <p class="view-sub">Every entry the app holds, by abbreviation where there is one,
+        otherwise by term. Pick a letter.</p>
+    </div>
+
+    <!-- Toolbar shared by the results view and the lexicon view -->
+    <div class="toolbar">
+      <p id="count" class="count" role="status" aria-live="polite"></p>
+      <div class="toolbar-actions">
+        <div class="dropdown">
+          <button id="src-btn" class="chip" type="button" aria-expanded="false"
+                  aria-controls="src-panel">
+            <span class="chip-label">Sources</span>
+            <span id="src-summary">All</span>
+            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
+          <div id="src-panel" class="src-panel" hidden>
+            <div class="field">
+              <label for="src-search">Find a source</label>
+              <input id="src-search" type="search" spellcheck="false" placeholder="AJP-3.2">
+            </div>
+            <div class="src-actions">
+              <button id="src-all" class="link-btn" type="button">Select every source</button>
+              <button id="src-none" class="link-btn" type="button">Clear the selection</button>
+            </div>
+            <ul id="src-list" class="src-list" aria-label="Sources"></ul>
+            <p id="src-empty" class="src-none" hidden>No source matches that.</p>
+          </div>
+        </div>
+        <a class="chip" href="#/lexicon" data-when="results">Browse the lexicon</a>
+        <a class="chip" href="#/" data-when="lexicon">Search again</a>
+        <a class="chip chip-accent" href="#/add">Add a term</a>
       </div>
     </div>
-    <div class="field">
-      <label for="f-def">Definition</label>
-      <textarea id="f-def" rows="3" maxlength="2000"
-                placeholder="What it means, in your own words."></textarea>
-      <p class="hint">Optional.</p>
-    </div>
-    <p id="f-msg" class="addform-msg" role="alert" hidden></p>
-    <div class="addform-foot">
-      <p class="addform-note">Saved in this browser only. It is not sent anywhere,
-        nobody else sees it, and clearing the browser's site data removes it.</p>
-      <div class="addform-actions">
-        <button id="f-cancel" class="btn btn-quiet" type="button">Cancel</button>
-        <button id="f-save" class="btn" type="button">Save term</button>
+
+    <!-- Lexicon view: the same records, A to Z -->
+    <section id="lexicon" class="view" aria-labelledby="lex-title">
+      <div id="lex-letters" class="letters" role="tablist" aria-label="Jump to a letter"></div>
+      <div class="panel">
+        <div id="lex-list" class="list" role="tabpanel" aria-labelledby="lex-title" tabindex="-1"></div>
       </div>
-    </div>
-  </section>
+      <div class="more-row">
+        <button id="lex-more" class="btn" type="button" hidden>Show more entries</button>
+      </div>
+    </section>
+
+    <!-- Results view -->
+    <section id="results" class="view panel" aria-label="Results"></section>
+
+    <!-- Add or edit a term: its own route, not a dialog -->
+    <section id="form-view" class="view" aria-labelledby="f-title">
+      <h2 id="f-title" class="view-title">Add a term</h2>
+      <p class="view-sub">Kept in this browser alone. It is never uploaded, nobody else
+        sees it, and clearing the browser's site data removes it.</p>
+      <div class="panel panel-pad">
+        <form id="term-form" novalidate>
+          <div class="form-grid">
+            <div class="field">
+              <label for="f-abbr">Abbreviation</label>
+              <input id="f-abbr" type="text" spellcheck="false" autocapitalize="characters"
+                     maxlength="40" placeholder="MAOP" aria-describedby="f-abbr-hint">
+              <p id="f-abbr-hint" class="hint">Optional.</p>
+            </div>
+            <div class="field">
+              <label for="f-term">Term</label>
+              <input id="f-term" type="text" spellcheck="false" maxlength="200"
+                     placeholder="master air operations plan" aria-describedby="f-term-hint">
+              <p id="f-term-hint" class="hint">Required.</p>
+            </div>
+          </div>
+          <div class="field">
+            <label for="f-def">Definition</label>
+            <textarea id="f-def" rows="4" maxlength="2000"
+                      aria-describedby="f-def-hint"></textarea>
+            <p id="f-def-hint" class="hint">Optional. What it means, in your own words.</p>
+          </div>
+          <p id="f-msg" class="form-msg" role="alert" hidden></p>
+          <div class="form-foot">
+            <a id="f-cancel" class="btn btn-quiet" href="#/">Cancel</a>
+            <button id="f-save" class="btn btn-primary" type="submit">Save term</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+  </div>
 
   <p id="local-msg" class="local-msg" role="status" aria-live="polite" hidden></p>
-
-  <section id="results" class="results" aria-label="Results" tabindex="-1"></section>
-
-  <section id="empty" class="empty">
-    <p>Start typing in either field.</p>
-  </section>
 </main>
 
-<footer class="wrap site-footer">
-  <p>
-    Terminology from <strong>AAP-15</strong> (NATOTerm extract, 15 April 2026),
-    <strong>AAP-06</strong> (2019) and the lexicons of 32 <strong>Allied Joint
-    Publications</strong>. Tags such as <span class="tag tag-pub">AJP-3.3</span> show
-    which publications use an entry. Entries marked
-    <span class="tag tag-common">Common usage</span> and the plain-language
-    search keywords are unofficial additions to make searching easier.
-  </p>
-  <p>Runs entirely in your browser. Nothing you type leaves the device. Terms you
-    add yourself are stored by this browser alone, marked
-    <span class="tag tag-local">Added by you</span>, and never sent anywhere.</p>
-  <p id="status" class="status"></p>
+<footer class="site-footer">
+  <div class="col">
+    <p>
+      Terminology from <strong>AAP-15</strong> (NATOTerm extract, 15 April 2026),
+      <strong>AAP-06</strong> (2019) and the lexicons of 32 <strong>Allied Joint
+      Publications</strong>. Entries marked <em>Common usage</em> or <em>Other</em>,
+      and the plain-language search keywords, are unofficial additions that make
+      searching easier.
+    </p>
+    <p>Runs entirely in your browser. Nothing you type leaves the device. Terms you
+      add yourself are stored by this browser alone, marked <em>Added by you</em>,
+      and never sent anywhere.</p>
+    <p id="status" class="status"></p>
+  </div>
 </footer>
+
+<dialog id="confirm" class="dialog" aria-labelledby="confirm-title">
+  <h2 id="confirm-title" class="dialog-title">Remove this term?</h2>
+  <p id="confirm-text" class="dialog-text"></p>
+  <div class="dialog-foot">
+    <button id="confirm-cancel" class="btn btn-quiet" type="button">Cancel</button>
+    <button id="confirm-ok" class="btn btn-danger" type="button">Remove term</button>
+  </div>
+</dialog>
 
 <script src="app.js" defer></script>
 </body>

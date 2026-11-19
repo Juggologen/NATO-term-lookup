@@ -1,5 +1,5 @@
 /* NATO Term Lookup service worker: cache the whole app so it works with no signal. */
-var CACHE = 'nato-lookup-v10';
+var CACHE = 'nato-lookup-v11';
 var ASSETS = [
   './',
   'index.html',

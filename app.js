@@ -1,19 +1,30 @@
 /* NATO Term Lookup - offline abbreviation and term reference.
-   No dependencies, no network calls beyond this app's own files. */
+   No dependencies, no network calls beyond this app's own files.
+
+   Three views live on one page, chosen by the hash route:
+     #/          search      - one bar, abbreviation or definition
+     #/lexicon   lexicon     - the same records, A to Z
+     #/add       form        - add a term, kept in this browser
+     #/edit/<id> form        - change one you added
+*/
 (function () {
   'use strict';
 
   var MAX_RESULTS = 60;
-  var TERM_SLOTS = 20;   // of MAX_RESULTS, held back for entries with no abbreviation
+  var TERM_SLOTS = 20;    // of MAX_RESULTS, held back for entries with no abbreviation
+  var LEX_PAGE = 120;     // lexicon entries drawn per step
+
   var els = {
-    abbr:    document.getElementById('q-abbr'),
-    text:    document.getElementById('q-text'),
-    results: document.getElementById('results'),
-    count:   document.getElementById('count'),
-    empty:   document.getElementById('empty'),
-    clear:   document.getElementById('clear'),
-    theme:   document.getElementById('theme'),
-    status:  document.getElementById('status'),
+    body:     document.body,
+    main:     document.getElementById('main'),
+    q:        document.getElementById('q'),
+    mode:     document.getElementById('mode'),
+    qClear:   document.getElementById('q-clear'),
+    results:  document.getElementById('results'),
+    count:    document.getElementById('count'),
+    theme:    document.getElementById('theme'),
+    status:   document.getElementById('status'),
+
     srcBtn:     document.getElementById('src-btn'),
     srcSummary: document.getElementById('src-summary'),
     srcPanel:   document.getElementById('src-panel'),
@@ -22,17 +33,37 @@
     srcEmpty:   document.getElementById('src-empty'),
     srcAll:     document.getElementById('src-all'),
     srcNone:    document.getElementById('src-none'),
-    addBtn:   document.getElementById('add-btn'),
-    addPanel: document.getElementById('add-panel'),
-    fTitle:   document.getElementById('add-title'),
+
+    lexTitle:   document.getElementById('lex-title'),
+    lexLetters: document.getElementById('lex-letters'),
+    lexList:    document.getElementById('lex-list'),
+    lexMore:    document.getElementById('lex-more'),
+
+    formView: document.getElementById('form-view'),
+    form:     document.getElementById('term-form'),
+    fTitle:   document.getElementById('f-title'),
     fAbbr:    document.getElementById('f-abbr'),
     fTerm:    document.getElementById('f-term'),
     fDef:     document.getElementById('f-def'),
     fMsg:     document.getElementById('f-msg'),
     fSave:    document.getElementById('f-save'),
     fCancel:  document.getElementById('f-cancel'),
+
+    dialog:    document.getElementById('confirm'),
+    dlgTitle:  document.getElementById('confirm-title'),
+    dlgText:   document.getElementById('confirm-text'),
+    dlgOk:     document.getElementById('confirm-ok'),
+    dlgCancel: document.getElementById('confirm-cancel'),
+
     localMsg: document.getElementById('local-msg')
   };
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
 
   /* ---------------- theme ---------------- */
 
@@ -43,11 +74,19 @@
     var t = document.documentElement.getAttribute('data-theme');
     return t === 'dark' || t === 'light' ? t : (systemDark() ? 'dark' : 'light');
   }
+  function labelTheme() {
+    var next = currentTheme() === 'dark' ? 'light' : 'dark';
+    var text = 'Switch to the ' + next + ' theme';
+    els.theme.setAttribute('aria-label', text);
+    els.theme.setAttribute('title', text);
+  }
   els.theme.addEventListener('click', function () {
     var next = currentTheme() === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     try { localStorage.setItem('theme', next); } catch (e) { /* private mode */ }
+    labelTheme();
   });
+  labelTheme();
 
   /* ---------------- text helpers ---------------- */
 
@@ -72,12 +111,13 @@
   var sources = [];
   var selected = Object.create(null);
   var selectedCount = 0;
-  var postings = Object.create(null);  // token -> [idx, weight, idx, weight, ...]
-  var vocab = [];                      // sorted tokens, for prefix expansion
+  var vocab = [];
   var idf = Object.create(null);
   var foldedTerm = [];
   var foldedBody = [];
-  var abbrKeys = [];                   // normalised abbreviation + variants per entry
+  var abbrKeys = [];
+  var prominence = [];
+  var stemMap = Object.create(null);
 
   /* Short, high-signal fields are scored separately from long prose, so a
      two-word term that matches beats a long definition that happens to
@@ -95,8 +135,7 @@
       'being that this these those it its which who whom what when where how why do does did ' +
       'done not no any all such other than then there their them they you your we our us i ' +
       'can could will would shall should may might must into over under about between within ' +
-      'during after before more most some each both one two ' +
-      'och att som for en ett av pa till med vad ska man den det de har ar kan vid om').split(' ');
+      'during after before more most some each both one two').split(' ');
     for (var i = 0; i < words.length; i++) set[words[i]] = 1;
     return set;
   })();
@@ -168,6 +207,7 @@
     for (var vt in marks) vocab.push(vt);
     vocab.sort();
     buildStems();
+    buildLexicon();
   }
 
   /* prefix range in the sorted vocabulary */
@@ -247,8 +287,7 @@
       var sc = sources[i];
       if (q && fold(sc.code + ' ' + sc.name).indexOf(q) === -1) continue;
       if (sc.group !== lastGroup && sc.group === 'ajp') {
-        var sep = el('li', 'src-sep', 'Allied Joint Publications');
-        frag.appendChild(sep);
+        frag.appendChild(el('li', 'src-sep', 'Allied Joint Publications'));
       }
       lastGroup = sc.group;
       var li = el('li');
@@ -260,7 +299,7 @@
       lab.appendChild(box);
       lab.appendChild(el('span', 'src-code', sc.code));
       lab.appendChild(el('span', 'src-name', sc.name));
-      lab.appendChild(el('span', 'src-count', String(sc.count)));
+      lab.appendChild(el('span', 'src-count', sc.count.toLocaleString('en-GB')));
       li.appendChild(lab);
       frag.appendChild(li);
       shown++;
@@ -272,7 +311,7 @@
 
   function summarise() {
     if (!selectedCount) {
-      els.srcSummary.textContent = 'All sources';
+      els.srcSummary.textContent = 'All';
       els.srcBtn.classList.remove('on');
       return;
     }
@@ -296,6 +335,14 @@
     return false;
   }
 
+  function clearFilters() {
+    selected = Object.create(null);
+    selectedCount = 0;
+    renderSources(els.srcSearch.value);
+    summarise();
+    refresh();
+  }
+
   function openPanel(open) {
     els.srcPanel.hidden = !open;
     els.srcBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -306,12 +353,8 @@
     }
   }
 
-  els.srcBtn.addEventListener('click', function () {
-    openPanel(els.srcPanel.hidden);
-  });
-  els.srcSearch.addEventListener('input', function () {
-    renderSources(els.srcSearch.value);
-  });
+  els.srcBtn.addEventListener('click', function () { openPanel(els.srcPanel.hidden); });
+  els.srcSearch.addEventListener('input', function () { renderSources(els.srcSearch.value); });
   els.srcList.addEventListener('change', function (ev) {
     var box = ev.target;
     if (!box || box.type !== 'checkbox') return;
@@ -322,7 +365,7 @@
       selectedCount--;
     }
     summarise();
-    run();
+    refresh();
   });
   els.srcAll.addEventListener('click', function () {
     selected = Object.create(null);
@@ -334,15 +377,9 @@
     }
     renderSources(els.srcSearch.value);
     summarise();
-    run();
+    refresh();
   });
-  els.srcNone.addEventListener('click', function () {
-    selected = Object.create(null);
-    selectedCount = 0;
-    renderSources(els.srcSearch.value);
-    summarise();
-    run();
-  });
+  els.srcNone.addEventListener('click', clearFilters);
   document.addEventListener('click', function (ev) {
     if (els.srcPanel.hidden) return;
     if (els.srcPanel.contains(ev.target) || els.srcBtn.contains(ev.target)) return;
@@ -369,9 +406,6 @@
     s = s.replace(/e$/, '');
     return s.length >= 3 ? s : tok;
   }
-
-  var stemMap = Object.create(null);
-  var prominence = [];
 
   function buildStems() {
     for (var i = 0; i < vocab.length; i++) {
@@ -459,9 +493,9 @@
     return qt.length;
   }
 
-  function searchAbbr(query, scores, touched, textActive) {
+  function searchAbbr(query, scores, touched) {
     var q = normAbbr(query);
-    if (!q) return 0;
+    if (!q) return;
     var raw = query.trim().toUpperCase();
     for (var i = 0; i < entries.length; i++) {
       var keys = abbrKeys[i], best = 0;
@@ -476,80 +510,14 @@
       /* Punctuation is stripped before matching, so "D&G" and "DG" look alike.
          Favour the entry spelled the way the person typed it. */
       if (best > 0 && entries[i].a && entries[i].a.toUpperCase() === raw) best += 25;
-      if (best > 0) {
-        if (scores[i] === 0 && !textActive) touched.push(i);
-        if (textActive) { if (scores[i] > 0) scores[i] += best; else scores[i] = -1; }
-        else scores[i] += best;
-      } else if (textActive) {
-        scores[i] = -1;                        /* drop: must satisfy both fields */
-      }
+      if (best > 0) { scores[i] = best; touched.push(i); }
     }
-    return 1;
   }
 
   var scores = null, hits = null, hitGen = null, gen = 0;
   var termScratch = null, bodyScratch = null;
 
-  function run() {
-    var qa = els.abbr.value.trim();
-    var qt = els.text.value.trim();
-    els.clear.hidden = !(qa || qt);
-
-    if (!qa && !qt) {
-      /* With a source selected and nothing typed, list that source instead of
-         showing the empty state - it makes the filter usable for browsing. */
-      if (selectedCount && entries.length) {
-        els.empty.hidden = true;
-        var all = [];
-        for (var b = 0; b < entries.length; b++) {
-          if (inSelectedSources(entries[b])) all.push(b);
-        }
-        render(all, '', '');
-        return;
-      }
-      els.results.textContent = '';
-      els.count.textContent = '';
-      els.empty.hidden = false;
-      return;
-    }
-    els.empty.hidden = true;
-    if (!entries.length) { els.count.textContent = 'Loading…'; return; }
-
-    gen++;
-    var touched = [];
-    scores.fill(0);
-    var textActive = qt.length > 0;
-    if (textActive) searchText(qt, scores, touched);
-    if (qa) searchAbbr(qa, scores, touched, textActive);
-
-    var out = [];
-    for (var i = 0; i < touched.length; i++) {
-      var idx = touched[i];
-      if (scores[idx] > 0 && inSelectedSources(entries[idx])) out.push(idx);
-    }
-    if (!textActive && qa) {
-      /* searchAbbr pushed its own matches */
-    }
-    out.sort(function (a, b) {
-      var d = scores[b] - scores[a];
-      if (d) return d;
-      var la = (entries[a].a || '').length, lb = (entries[b].a || '').length;
-      if (la !== lb) return la - lb;
-      if (prominence[b] !== prominence[a]) return prominence[b] - prominence[a];
-      return (entries[a].t || '').localeCompare(entries[b].t || '');
-    });
-
-    render(out, qa, qt, textActive);
-  }
-
-  /* ---------------- rendering ---------------- */
-
-  function el(tag, cls, text) {
-    var n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text != null) n.textContent = text;
-    return n;
-  }
+  /* ---------------- rendering parts ---------------- */
 
   function highlight(text, terms) {
     var frag = document.createDocumentFragment();
@@ -587,15 +555,44 @@
     return frag;
   }
 
-  var SRC_LABEL = { 'AAP-15': 'AAP-15', 'AAP-06': 'AAP-06',
-                    'AJP': 'AJP lexicon', 'COMMON': 'Common usage',
-                    'OTHER': 'Other', 'LOCAL': 'Added by you' };
+  var SRC_LABEL = { 'AAP-15': 'AAP-15', 'AAP-06': 'AAP-06', 'AJP': 'AJP lexicon' };
+
+  function metaLine(e) {
+    var p = el('p', 'meta');
+    var first = true;
+    function part(node) {
+      if (!first) p.appendChild(el('span', 'sep', '·'));
+      first = false;
+      p.appendChild(node);
+    }
+    if (e.s === 'LOCAL') part(el('span', 'flag flag-own', 'Added by you'));
+    else if (e.s === 'COMMON') part(el('span', 'flag', 'Common usage'));
+    else if (e.s === 'OTHER') part(el('span', 'flag', 'Other'));
+    else part(document.createTextNode(SRC_LABEL[e.s] || e.s));
+
+    if (e.p && e.p.length) {
+      part(document.createTextNode(e.p.slice(0, 3).join(', ') +
+        (e.p.length > 3 ? ' +' + (e.p.length - 3) : '')));
+    }
+    if (e.y) part(document.createTextNode(e.y));
+    if (e.v) part(document.createTextNode('also written ' + e.v.join(', ')));
+    if (e.alt) part(document.createTextNode('also: ' + e.alt.join('; ')));
+    if (e.g) for (var g = 0; g < e.g.length; g++) part(el('span', 'flag', e.g[g]));
+    return p;
+  }
+
+  function actionBtn(label, fn) {
+    var b = el('button', 'link-btn', label);
+    b.type = 'button';
+    b.addEventListener('click', fn);
+    return b;
+  }
 
   function card(e, terms) {
     var box = el('article', 'entry');
     var head = el('div', 'entry-head');
     if (e.a) head.appendChild(el('span', 'abbr', e.a));
-    var term = el('span', 'term');
+    var term = el('h3', 'term');
     term.appendChild(highlight(e.t || '', terms));
     head.appendChild(term);
     box.appendChild(head);
@@ -622,41 +619,19 @@
       nn.appendChild(highlight(e.n[n2], terms));
       box.appendChild(nn);
     }
-    var meta = el('p', 'meta');
-    if (e.alt) meta.appendChild(el('span', 'tag tag-also', 'also: ' + e.alt.join('; ')));
-    if (e.v) meta.appendChild(el('span', 'tag tag-also', 'form: ' + e.v.join(', ')));
-    if (e.g) for (var g = 0; g < e.g.length; g++) {
-      meta.appendChild(el('span', 'tag tag-flag', e.g[g]));
-    }
-    meta.appendChild(el('span', 'tag tag-src' +
-                        (e.s === 'COMMON' || e.s === 'OTHER' ? ' tag-common' : '') +
-                        (e.s === 'LOCAL' ? ' tag-local' : ''),
-                        SRC_LABEL[e.s] || e.s));
-    if (e.p) {
-      for (var pi = 0; pi < Math.min(e.p.length, 3); pi++) {
-        meta.appendChild(el('span', 'tag tag-pub', e.p[pi]));
-      }
-      if (e.p.length > 3) {
-        meta.appendChild(el('span', 'tag tag-pub', '+' + (e.p.length - 3)));
-      }
-    }
-    if (e.y) meta.appendChild(el('span', null, e.y));
-    box.appendChild(meta);
+    box.appendChild(metaLine(e));
 
     if (e.s === 'LOCAL' && e.id) {
       var acts = el('p', 'entry-actions');
-      acts.appendChild(actionBtn('Edit', function () { openForm(e); }));
-      acts.appendChild(actionBtn('Remove', function () { removeLocal(e.id); }));
+      var edit = el('a', 'link-btn', 'Edit this term');
+      edit.href = '#/edit/' + encodeURIComponent(e.id);
+      acts.appendChild(edit);
+      acts.appendChild(actionBtn('Remove this term', function (ev) {
+        askRemove(e, ev.currentTarget);
+      }));
       box.appendChild(acts);
     }
     return box;
-  }
-
-  function actionBtn(label, fn) {
-    var b = el('button', 'text-btn', label);
-    b.type = 'button';
-    b.addEventListener('click', fn);
-    return b;
   }
 
   /* A heading above a group of results, carrying how many it holds and how
@@ -673,13 +648,113 @@
     for (var i = from; i < to; i++) frag.appendChild(card(entries[list[i]], terms));
   }
 
-  function render(list, qa, qt, grouped) {
-    var terms = tokens(qt);
-    if (qa) terms = terms.concat([fold(qa)]);
+  function emptyState(title, body, actions) {
+    var box = el('section', 'empty');
+    box.appendChild(el('h2', null, title));
+    box.appendChild(el('p', null, body));
+    var row = el('div', 'empty-actions');
+    for (var i = 0; i < actions.length; i++) row.appendChild(actions[i]);
+    box.appendChild(row);
+    return box;
+  }
+
+  function linkBtn(label, href, cls) {
+    var a = el('a', 'btn' + (cls ? ' ' + cls : ''), label);
+    a.href = href;
+    return a;
+  }
+
+  function pushBtn(label, fn, cls) {
+    var b = el('button', 'btn' + (cls ? ' ' + cls : ''), label);
+    b.type = 'button';
+    b.addEventListener('click', fn);
+    return b;
+  }
+
+  /* ---------------- the search view ---------------- */
+
+  var MODE_KEY = 'nato-lookup.mode';
+  var HINTS = {
+    abbr: 'Type the short form to get the full term.',
+    def:  'Describe it in plain words, or type the term itself.'
+  };
+  var PLACEHOLDER = {
+    abbr: 'OPORD',
+    def:  'order telling units what to do'
+  };
+
+  function mode() { return els.mode.value === 'def' ? 'def' : 'abbr'; }
+
+  function applyMode() {
+    var m = mode();
+    els.q.placeholder = PLACEHOLDER[m];
+    els.q.setAttribute('autocapitalize', m === 'abbr' ? 'characters' : 'off');
+    var hint = document.getElementById('q-hint');
+    hint.textContent = '';
+    hint.appendChild(document.createTextNode(HINTS[m] + ' Press '));
+    hint.appendChild(el('kbd', null, '/'));
+    hint.appendChild(document.createTextNode(' to come back here.'));
+    try { localStorage.setItem(MODE_KEY, m); } catch (e) { /* private mode */ }
+  }
+
+  function otherMode() { return mode() === 'abbr' ? 'def' : 'abbr'; }
+
+  function switchMode() {
+    els.mode.value = otherMode();
+    applyMode();
+    run();
+    els.q.focus();
+  }
+
+  function run() {
+    if (view !== 'search') return;
+    var q = els.q.value.trim();
+    els.qClear.hidden = !q;
+
+    if (!q) {
+      els.body.setAttribute('data-view', 'start');
+      els.results.textContent = '';
+      els.count.textContent = '';
+      return;
+    }
+    els.body.setAttribute('data-view', 'results');
+    if (!entries.length) {
+      els.results.textContent = '';
+      els.count.textContent = loadError ? '' : 'Loading the terminology…';
+      if (loadError) els.results.appendChild(emptyState('The terminology file did not load',
+        loadError, [pushBtn('Try loading it again', function () { location.reload(); }, 'btn-primary')]));
+      return;
+    }
+
+    gen++;
+    var touched = [];
+    scores.fill(0);
+    var byText = mode() === 'def';
+    if (byText) searchText(q, scores, touched); else searchAbbr(q, scores, touched);
+
+    var out = [];
+    for (var i = 0; i < touched.length; i++) {
+      var idx = touched[i];
+      if (scores[idx] > 0 && inSelectedSources(entries[idx])) out.push(idx);
+    }
+    out.sort(function (a, b) {
+      var d = scores[b] - scores[a];
+      if (d) return d;
+      var la = (entries[a].a || '').length, lb = (entries[b].a || '').length;
+      if (la !== lb) return la - lb;
+      if (prominence[b] !== prominence[a]) return prominence[b] - prominence[a];
+      return (entries[a].t || '').localeCompare(entries[b].t || '');
+    });
+
+    render(out, q, byText);
+  }
+
+  function render(list, q, grouped) {
+    var terms = grouped ? tokens(q) : [fold(q)];
     var frag = document.createDocumentFragment();
     var shown;
 
-    /* A description search returns abbreviations and plain terms together.
+    /* A definition search returns abbreviations and plain terms together.
        Keep the abbreviations first, under their own headings, so the two kinds
        are never read as one list. */
     var withAbbr = [], noAbbr = [];
@@ -711,20 +786,224 @@
     var within = selectedCount ? ' in the selected source' + (selectedCount > 1 ? 's' : '') : '';
     if (!list.length) {
       els.count.textContent = 'No match' + within + '.';
-      var none = el('p', 'empty', selectedCount
-        ? 'Nothing found in the selected sources. Widen the source filter, or try fewer words. '
-        : 'Nothing found. Try fewer words, or the other field. ');
-      none.appendChild(actionBtn('Add it yourself', function () {
-        openForm({ a: qa, t: qt });
-      }));
-      els.results.appendChild(none);
+      var actions = [];
+      if (selectedCount) actions.push(pushBtn('Clear all filters', clearFilters, 'btn-primary'));
+      actions.push(pushBtn(grouped ? 'Search abbreviations instead' : 'Search definitions instead',
+                           switchMode, selectedCount ? '' : 'btn-primary'));
+      actions.push(linkBtn('Add this term', '#/add'));
+      els.results.appendChild(emptyState(
+        (grouped ? 'No term matches “' : 'No abbreviation matches “') + q + '”',
+        selectedCount
+          ? 'Nothing in the sources you picked matches. Widen the filter, try the other kind of search, or add the term yourself.'
+          : 'Try fewer words, the other kind of search, or add the term yourself — your own terms stay in this browser.',
+        actions));
     } else if (list.length > shown) {
       els.count.textContent = 'Showing ' + shown + ' of ' +
-        list.length.toLocaleString('en-GB') + (within || ' matches');
+        list.length.toLocaleString('en-GB') + ' matches' + within;
     } else {
       els.count.textContent = list.length +
         (list.length === 1 ? ' match' : ' matches') + within;
     }
+  }
+
+  /* ---------------- the lexicon view ---------------- */
+
+  var LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+  var buckets = Object.create(null);
+  var lexLetter = 'A';
+  var lexShown = 0;
+  var letterBtns = [];
+
+  function sortKey(e) { return fold(e.a || e.t || ''); }
+
+  function buildLexicon() {
+    buckets = Object.create(null);
+    for (var i = 0; i < LETTERS.length; i++) buckets[LETTERS[i]] = [];
+    for (var n = 0; n < entries.length; n++) {
+      var c = sortKey(entries[n]).charAt(0).toUpperCase();
+      buckets[LETTERS.indexOf(c) === -1 ? '#' : c].push(n);
+    }
+    for (var L = 0; L < LETTERS.length; L++) {
+      buckets[LETTERS[L]].sort(function (a, b) {
+        var ka = sortKey(entries[a]), kb = sortKey(entries[b]);
+        if (ka !== kb) return ka < kb ? -1 : 1;
+        return (entries[a].t || '').localeCompare(entries[b].t || '');
+      });
+    }
+  }
+
+  function lexList() {
+    var all = buckets[lexLetter] || [];
+    if (!selectedCount) return all;
+    var out = [];
+    for (var i = 0; i < all.length; i++) {
+      if (inSelectedSources(entries[all[i]])) out.push(all[i]);
+    }
+    return out;
+  }
+
+  function lexCount(letter) {
+    var all = buckets[letter] || [];
+    if (!selectedCount) return all.length;
+    var n = 0;
+    for (var i = 0; i < all.length; i++) if (inSelectedSources(entries[all[i]])) n++;
+    return n;
+  }
+
+  function renderLetters() {
+    els.lexLetters.textContent = '';
+    letterBtns = [];
+    for (var i = 0; i < LETTERS.length; i++) {
+      var L = LETTERS[i];
+      var n = lexCount(L);
+      var b = el('button', 'letter', L);
+      b.type = 'button';
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', L === lexLetter ? 'true' : 'false');
+      b.setAttribute('aria-controls', 'lex-list');
+      b.id = 'letter-' + (L === '#' ? 'other' : L);
+      if (L === lexLetter) els.lexList.setAttribute('aria-labelledby', b.id);
+      b.setAttribute('title', n.toLocaleString('en-GB') +
+        (n === 1 ? ' entry' : ' entries') + ' under ' + (L === '#' ? 'a number or symbol' : L));
+      b.tabIndex = L === lexLetter ? 0 : -1;
+      b.dataset.letter = L;
+      if (!n) b.disabled = true;
+      letterBtns.push(b);
+      els.lexLetters.appendChild(b);
+    }
+  }
+
+  function renderLex(keepShown) {
+    if (!entries.length && !loadError) {
+      els.lexList.textContent = '';
+      els.lexList.appendChild(el('p', 'empty', 'Loading the terminology…'));
+      els.lexMore.hidden = true;
+      els.count.textContent = '';
+      return;
+    }
+    var list = lexList();
+    if (!keepShown) lexShown = 0;
+    lexShown = Math.min(Math.max(lexShown || LEX_PAGE, LEX_PAGE), list.length);
+
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < lexShown; i++) frag.appendChild(card(entries[list[i]], []));
+    els.lexList.textContent = '';
+
+    if (!list.length) {
+      els.lexList.appendChild(emptyState(
+        'Nothing under ' + (lexLetter === '#' ? 'numbers and symbols' : lexLetter),
+        selectedCount
+          ? 'No entry in the sources you picked starts with that. Clear the filter or pick another letter.'
+          : 'No entry starts with that. Pick another letter, or add the term yourself.',
+        selectedCount
+          ? [pushBtn('Clear all filters', clearFilters, 'btn-primary'), linkBtn('Add a term', '#/add')]
+          : [linkBtn('Add a term', '#/add', 'btn-primary')]));
+    } else {
+      els.lexList.appendChild(frag);
+    }
+
+    els.lexMore.hidden = lexShown >= list.length;
+    if (!els.lexMore.hidden) {
+      els.lexMore.textContent = 'Show ' +
+        Math.min(LEX_PAGE, list.length - lexShown) + ' more of ' +
+        list.length.toLocaleString('en-GB');
+    }
+    els.count.textContent = list.length
+      ? 'Showing ' + Math.min(lexShown, list.length) + ' of ' +
+        list.length.toLocaleString('en-GB') + ' under ' + lexLetter +
+        (selectedCount ? ' in the selected source' + (selectedCount > 1 ? 's' : '') : '')
+      : 'Nothing under ' + lexLetter +
+        (selectedCount ? ' in the selected source' + (selectedCount > 1 ? 's' : '') : '') + '.';
+  }
+
+  function pickLetter(L, focus) {
+    lexLetter = L;
+    renderLetters();
+    renderLex(false);
+    if (focus) {
+      for (var i = 0; i < letterBtns.length; i++) {
+        if (letterBtns[i].dataset.letter === L) { letterBtns[i].focus(); break; }
+      }
+    }
+  }
+
+  els.lexLetters.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button.letter');
+    if (!b || b.disabled) return;
+    pickLetter(b.dataset.letter, false);
+  });
+
+  els.lexLetters.addEventListener('keydown', function (ev) {
+    var step = { ArrowRight: 1, ArrowLeft: -1, Home: 'first', End: 'last' }[ev.key];
+    if (step === undefined) return;
+    ev.preventDefault();
+    var live = letterBtns.filter(function (b) { return !b.disabled; });
+    if (!live.length) return;
+    var at = live.findIndex(function (b) { return b.dataset.letter === lexLetter; });
+    var next;
+    if (step === 'first') next = live[0];
+    else if (step === 'last') next = live[live.length - 1];
+    else next = live[(Math.max(at, 0) + step + live.length) % live.length];
+    pickLetter(next.dataset.letter, true);
+  });
+
+  els.lexMore.addEventListener('click', function () {
+    lexShown += LEX_PAGE;
+    renderLex(true);
+  });
+
+  /* ---------------- routing ---------------- */
+
+  var view = 'search';      // search | lexicon | form
+  var navigated = false;    // a hash change, rather than the first paint
+
+  function parseHash() {
+    var h = location.hash || '';
+    if (h.indexOf('#/edit/') === 0) return { view: 'form', id: decodeURIComponent(h.slice(7)) };
+    if (h.indexOf('#/add') === 0) return { view: 'form', id: null };
+    if (h.indexOf('#/lexicon') === 0) return { view: 'lexicon' };
+    return { view: 'search' };
+  }
+
+  function focusTitle(node) {
+    node.setAttribute('tabindex', '-1');
+    node.focus();
+  }
+
+  function applyRoute() {
+    var r = parseHash();
+    view = r.view;
+    openPanel(false);
+
+    if (view === 'form') {
+      var rec = r.id ? localEntries[findLocal(r.id)] : null;
+      if (r.id && !rec) { location.hash = '#/'; return; }      /* gone: back to search */
+      els.body.setAttribute('data-view', 'form');
+      openForm(rec || { a: els.q.value.trim(), t: '' });
+      if (navigated) (rec ? els.fTerm : els.fAbbr).focus();
+      return;
+    }
+    if (view === 'lexicon') {
+      els.body.setAttribute('data-view', 'lexicon');
+      renderLetters();
+      renderLex(false);
+      if (navigated) focusTitle(els.lexTitle);
+      return;
+    }
+    run();
+    if (navigated) els.q.focus();
+  }
+
+  window.addEventListener('hashchange', function () {
+    navigated = true;
+    applyRoute();
+  });
+
+  /* Everything the current view needs redrawn after the data or the
+     filter changed. */
+  function refresh() {
+    if (view === 'lexicon') { renderLetters(); renderLex(false); }
+    else if (view === 'search') run();
   }
 
   /* ---------------- wiring ---------------- */
@@ -734,38 +1013,66 @@
     clearTimeout(pending);
     pending = setTimeout(run, 70);
   }
-  els.abbr.addEventListener('input', schedule);
-  els.text.addEventListener('input', schedule);
-
-  els.clear.addEventListener('click', function () {
-    els.abbr.value = '';
-    els.text.value = '';
+  /* The bar stays on screen in the lexicon view, so typing in it has to
+     take you back to the results rather than do nothing. */
+  function toSearch() {
+    if (view === 'search') return false;
+    location.hash = '#/';
+    return true;
+  }
+  els.q.addEventListener('input', function () {
+    if (toSearch()) return;
+    schedule();
+  });
+  els.mode.addEventListener('change', function () {
+    applyMode();
+    if (toSearch()) return;
     run();
-    els.abbr.focus();
+  });
+  els.qClear.addEventListener('click', function () {
+    els.q.value = '';
+    if (!toSearch()) run();
+    els.q.focus();
+  });
+  els.form.addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    termTouched = true;
+    saveForm();
+  });
+
+  /* Blur-first validation: nothing is flagged until the person has left the
+     field, and editing clears the message straight away. */
+  var termTouched = false;
+  els.fTerm.addEventListener('blur', function () {
+    if (!termTouched) return;
+    if (!els.fTerm.value.trim()) {
+      formMsg('Give the term a name. The abbreviation and definition are optional.');
+    }
+  });
+  els.fTerm.addEventListener('input', function () { termTouched = true; formMsg(''); });
+  els.fAbbr.addEventListener('input', function () { formMsg(''); });
+  els.fDef.addEventListener('input', function () { formMsg(''); });
+  document.querySelector('.search').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    if (!toSearch()) run();
   });
 
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape' && !els.addPanel.hidden &&
-        els.addPanel.contains(document.activeElement)) {
-      closeForm();
-      els.addBtn.focus();
-      return;
-    }
     if (ev.key === 'Escape' && !els.srcPanel.hidden) {
       openPanel(false);
       els.srcBtn.focus();
       return;
     }
-    if (ev.key === 'Escape') {
-      if (document.activeElement === els.abbr || document.activeElement === els.text) {
-        document.activeElement.value = '';
-        run();
-      }
+    if (ev.key === 'Escape' && document.activeElement === els.q && els.q.value) {
+      els.q.value = '';
+      if (!toSearch()) run();
       return;
     }
-    if (ev.key === '/' && document.activeElement !== els.abbr && document.activeElement !== els.text) {
+    if (ev.key === '/' && view !== 'form' &&
+        !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) {
       ev.preventDefault();
-      els.abbr.focus();
+      els.q.focus();
+      els.q.select();
     }
   });
 
@@ -775,7 +1082,7 @@
      browser's localStorage and nowhere else: never uploaded, never shared,
      and gone if the browser's site data is cleared. They are searched,
      filtered and ranked exactly like the published terminology, and every
-     card carries an "Added by you" tag so the two are never confused. */
+     card carries an "Added by you" mark so the two are never confused. */
 
   var LOCAL_KEY = 'nato-lookup.custom.v1';
   var shipped = [];
@@ -829,7 +1136,7 @@
       localStorage.setItem(LOCAL_KEY, JSON.stringify(localEntries));
       return '';
     } catch (e) {
-      return (e && /quota/i.test(e.name || '')) 
+      return (e && /quota/i.test(e.name || ''))
         ? 'This browser has no storage space left, so the term was not saved.'
         : 'This browser would not let the app store the term. Private browsing ' +
           'and blocked site data both do that.';
@@ -867,8 +1174,7 @@
   function statusLine() {
     if (loadError) {
       els.status.textContent = loadError + (localEntries.length
-        ? ' Your own ' + (localEntries.length === 1 ? 'term is' : 'terms are') +
-          ' still here.'
+        ? ' Your own ' + (localEntries.length === 1 ? 'term is' : 'terms are') + ' still here.'
         : '');
       return;
     }
@@ -890,7 +1196,7 @@
     els.localMsg.textContent = '';
     if (!text) { els.localMsg.hidden = true; return; }
     els.localMsg.appendChild(document.createTextNode(text));
-    if (undoable) els.localMsg.appendChild(actionBtn('Undo', undoRemove));
+    if (undoable) els.localMsg.appendChild(actionBtn('Undo the removal', undoRemove));
     els.localMsg.hidden = false;
   }
 
@@ -906,17 +1212,7 @@
     els.fDef.value = (rec && rec.d) || '';
     els.fTitle.textContent = editing ? 'Edit your term' : 'Add a term';
     els.fSave.textContent = editing ? 'Save changes' : 'Save term';
-    formMsg('');
-    els.addPanel.hidden = false;
-    els.addBtn.setAttribute('aria-expanded', 'true');
-    els.addPanel.scrollIntoView({ block: 'nearest' });
-    (editing ? els.fTerm : (els.fAbbr.value ? els.fTerm : els.fAbbr)).focus();
-  }
-
-  function closeForm() {
-    els.addPanel.hidden = true;
-    els.addBtn.setAttribute('aria-expanded', 'false');
-    editing = null;
+    termTouched = false;
     formMsg('');
   }
 
@@ -936,10 +1232,11 @@
       renderSources(els.srcSearch.value);
       summarise();
     }
-    var byAbbr = rec.a && normAbbr(rec.a);
-    els.abbr.value = byAbbr ? rec.a : '';
-    els.text.value = byAbbr ? '' : rec.t;
-    run();
+    els.mode.value = rec.a ? 'abbr' : 'def';
+    applyMode();
+    els.q.value = rec.a ? rec.a : rec.t;
+    if (location.hash && location.hash !== '#/') location.hash = '#/';
+    else { view = 'search'; run(); }
   }
 
   function saveForm() {
@@ -961,7 +1258,7 @@
     }
 
     var at = editing ? findLocal(editing) : -1;
-    if (editing && at === -1) { closeForm(); return; }
+    if (editing && at === -1) { location.hash = '#/'; return; }
     var before = at === -1 ? null : localEntries[at];
     var rec = { id: editing || newId(), a: abbr || null, t: term, s: 'LOCAL',
                 y: before && before.y ? before.y : today() };
@@ -976,10 +1273,40 @@
     }
     undoRec = null;
     applyLocal();
-    closeForm();
     note(at === -1 ? 'Saved in this browser only.' : 'Your changes are saved in this browser.');
     reveal(rec);
   }
+
+  /* Removing a term you added is destructive, so it is named and confirmed. */
+  var dlgTrigger = null;
+  var dlgTarget = null;
+
+  function askRemove(e, trigger) {
+    dlgTrigger = trigger || null;
+    dlgTarget = e.id;
+    els.dlgTitle.textContent = 'Remove ' + (e.a ? e.a + ' — ' : '') + e.t + '?';
+    els.dlgText.textContent = 'It goes from this browser and from your search results. ' +
+      'You can undo it straight afterwards.';
+    els.dialog.showModal();
+    els.dlgCancel.focus();
+  }
+
+  function closeDialog() {
+    if (els.dialog.open) els.dialog.close();
+  }
+
+  els.dlgCancel.addEventListener('click', closeDialog);
+  els.dlgOk.addEventListener('click', function () {
+    var id = dlgTarget;
+    closeDialog();
+    if (id) removeLocal(id);
+  });
+  els.dialog.addEventListener('close', function () {
+    dlgTarget = null;
+    if (dlgTrigger && document.body.contains(dlgTrigger)) dlgTrigger.focus();
+    else els.q.focus();
+    dlgTrigger = null;
+  });
 
   function removeLocal(id) {
     var at = findLocal(id);
@@ -994,8 +1321,8 @@
     }
     undoRec = { rec: gone, at: at };
     applyLocal();
-    if (editing === id) closeForm();
-    run();
+    if (editing === id && view === 'form') { location.hash = '#/'; return; }
+    refresh();
     note('Removed ' + (gone.a ? gone.a + ' — ' : '') + gone.t + '.', true);
   }
 
@@ -1021,34 +1348,21 @@
     if (ev.key !== null && ev.key !== LOCAL_KEY) return;
     localEntries = loadLocal();
     undoRec = null;
-    if (editing && findLocal(editing) === -1) closeForm();
     applyLocal();
-    run();
-  });
-
-  els.addBtn.addEventListener('click', function () {
-    if (els.addPanel.hidden) {
-      openForm({ a: els.abbr.value.trim(), t: els.text.value.trim() });
-    } else {
-      closeForm();
-      els.addBtn.focus();
-    }
-  });
-  els.fCancel.addEventListener('click', function () {
-    closeForm();
-    els.addBtn.focus();
-  });
-  els.fSave.addEventListener('click', saveForm);
-  els.addPanel.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter' && ev.target.tagName !== 'TEXTAREA' && ev.target.tagName !== 'BUTTON') {
-      ev.preventDefault();
-      saveForm();
-    }
+    if (view === 'form' && editing && findLocal(editing) === -1) { location.hash = '#/'; return; }
+    refresh();
   });
 
   /* ---------------- load ---------------- */
 
+  try {
+    var savedMode = localStorage.getItem(MODE_KEY);
+    if (savedMode === 'abbr' || savedMode === 'def') els.mode.value = savedMode;
+  } catch (e) { /* private mode */ }
+  applyMode();
+
   localEntries = loadLocal();
+  applyRoute();
 
   fetch('data/terms.json')
     .then(function (r) {
@@ -1060,13 +1374,12 @@
       publications = data.publications || {};
       builtOn = data.generated;
       applyLocal();
-      run();
+      refresh();
     })
     .catch(function (err) {
       loadError = 'Could not load the terminology file (' + err.message + ').';
-      els.count.textContent = '';
       applyLocal();          /* whatever you added yourself still works */
-      run();
+      refresh();
     });
 
   if ('serviceWorker' in navigator) {

@@ -11,29 +11,47 @@ phone and it works with no signal.
 
 ## Using it
 
-| Field | What to type | What you get |
+The landing page is one search bar. The selector on its left decides what you
+are searching:
+
+| Search by | What to type | What you get |
 | --- | --- | --- |
 | **Abbreviation** | `CIMIC`, `rOE`, partial forms like `MEDE` | Every sense of that abbreviation, exact matches first |
-| **Term or description** | The proper term, or plain words | Ranked candidate entries, abbreviations first |
+| **Definition** | The proper term, or plain words describing it | Ranked candidate entries, abbreviations first |
 
-A description search returns two kinds of entry, and keeps them apart under
+A definition search returns two kinds of entry, and keeps them apart under
 their own headings: **Abbreviations** first, then **Terms** — glossary entries
 that carry no abbreviation. Each heading shows how many that group holds. Part
 of the on-screen limit is reserved for the terms, so a long run of
 abbreviations cannot push them off the page.
 
-Fill in both fields to narrow results to entries matching both. `/` jumps to the
-abbreviation field, `Esc` clears the focused field. The theme follows the
-operating system and the toggle overrides it.
+When a search finds nothing, the empty result offers the other kind of search,
+and offers to add what you typed. `/` jumps back to the search bar, `Esc`
+clears it. The theme follows the operating system and the toggle overrides it.
+The selector remembers which kind of search you last used.
+
+### Browsing the full lexicon
+
+**Browse the full lexicon** lists every entry the app holds, A to Z, by
+abbreviation where there is one and otherwise by term. Pick a letter from the
+index — arrow keys move along it — and the list draws 120 entries at a time.
+The source filter applies here too, so a letter can be read one publication at
+a time. Typing in the search bar takes you straight back to the results.
 
 ### Adding your own terms
 
 **Add a term** opens a form for anything the glossaries do not carry: an
-abbreviation, a term, and a definition, of which only the term is required.
+abbreviation, a term, and a definition, of which only the term is required. It
+is reachable from the landing page, from the toolbar above any result list, and
+from the empty state when a search finds nothing — which carries whatever you
+typed into the form. The form has its own address, `#/add`, so the browser's
+back button leaves it.
+
 Saved entries are searched, ranked and filtered exactly like the published
-terminology, and each one is tagged **Added by you** on its card and gathered
-under **Yours** in the source filter. Cards you added carry *Edit* and
-*Remove*; a removal can be undone until the next change.
+terminology, and each one is marked **Added by you** on its card and gathered
+under **Yours** in the source filter. Cards you added carry *Edit this term*
+and *Remove this term*; removal names the entry and asks first, and can be
+undone until the next change.
 
 They are held in this browser's `localStorage` and nowhere else. They are not
 uploaded, nobody else sees them, they do not travel to your other devices, and
@@ -41,14 +59,12 @@ clearing the browser's site data deletes them. The footer says how many you
 have. If the browser refuses to store them — private browsing, blocked site
 data, a full quota — the form says so and nothing is silently lost.
 
-When a search finds nothing, the empty result offers to add what you typed.
-
 ### Filtering by source
 
-The **Source** field, the third control next to the two search boxes, opens a
-checkbox list of all 35 sources — the three glossaries plus each of the 32 Allied Joint Publications.
-Tick as many as you like; results are limited to entries that come from, or are
-referenced by, those sources.
+**Sources**, in the toolbar above the results and the lexicon, opens a checkbox
+list of all 35 sources — the three glossaries plus each of the 32 Allied Joint
+Publications. Tick as many as you like; results are limited to entries that
+come from, or are referenced by, those sources.
 
 The list has its own search box, which matches both the code and the subject, so
 typing `air` finds AJP-3.3 (Air and Space Operations), AJP-3.3.5 (Airspace
@@ -56,10 +72,8 @@ Control) and AJP-10.3, and typing `targeting` finds AJP-3.9. Each row shows how
 many entries that source contributes. **Any Allied Joint Publication** matches
 anything with a doctrine reference.
 
-With a source ticked and both search fields empty, the app lists that source's
-vocabulary instead of the empty state, so you can browse a publication's lexicon
-end to end. The filter resets when you reload the page — it is deliberately not
-remembered, so you never search a narrowed set without noticing.
+The filter resets when you reload the page — it is deliberately not remembered,
+so you never search a narrowed set without noticing.
 
 ### Installing on a phone
 
@@ -212,7 +226,7 @@ block ending in `(NATO Agreed)` is a term and its definition.
 ```
 index.html      markup
 styles.css      light/dark theming, no framework
-app.js          index building, search, rendering
+app.js          routing, index building, search, rendering
 sw.js           offline cache
 data/           terminology and the keyword layers
 tools/          PDF parsers, the AJP fetcher and the dataset builder
