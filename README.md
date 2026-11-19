@@ -26,6 +26,23 @@ Fill in both fields to narrow results to entries matching both. `/` jumps to the
 abbreviation field, `Esc` clears the focused field. The theme follows the
 operating system and the toggle overrides it.
 
+### Adding your own terms
+
+**Add a term** opens a form for anything the glossaries do not carry: an
+abbreviation, a term, and a definition, of which only the term is required.
+Saved entries are searched, ranked and filtered exactly like the published
+terminology, and each one is tagged **Added by you** on its card and gathered
+under **Yours** in the source filter. Cards you added carry *Edit* and
+*Remove*; a removal can be undone until the next change.
+
+They are held in this browser's `localStorage` and nowhere else. They are not
+uploaded, nobody else sees them, they do not travel to your other devices, and
+clearing the browser's site data deletes them. The footer says how many you
+have. If the browser refuses to store them — private browsing, blocked site
+data, a full quota — the form says so and nothing is silently lost.
+
+When a search finds nothing, the empty result offers to add what you typed.
+
 ### Filtering by source
 
 The **Source** field, the third control next to the two search boxes, opens a

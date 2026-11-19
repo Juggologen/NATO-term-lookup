@@ -81,8 +81,47 @@ try {
 
   <div class="bar">
     <p id="count" class="count" role="status" aria-live="polite"></p>
-    <button id="clear" class="text-btn" type="button" hidden>Clear</button>
+    <div class="bar-actions">
+      <button id="add-btn" class="text-btn" type="button" aria-expanded="false"
+              aria-controls="add-panel">Add a term</button>
+      <button id="clear" class="text-btn" type="button" hidden>Clear</button>
+    </div>
   </div>
+
+  <section id="add-panel" class="addform" hidden aria-labelledby="add-title">
+    <h2 id="add-title" class="addform-title">Add a term</h2>
+    <div class="addform-grid">
+      <div class="field">
+        <label for="f-abbr">Abbreviation</label>
+        <input id="f-abbr" type="text" autocomplete="off" autocapitalize="characters"
+               spellcheck="false" placeholder="MAOP" maxlength="40">
+        <p class="hint">Optional.</p>
+      </div>
+      <div class="field">
+        <label for="f-term">Term</label>
+        <input id="f-term" type="text" autocomplete="off" spellcheck="false"
+               placeholder="master air operations plan" maxlength="200">
+        <p class="hint">Required.</p>
+      </div>
+    </div>
+    <div class="field">
+      <label for="f-def">Definition</label>
+      <textarea id="f-def" rows="3" maxlength="2000"
+                placeholder="What it means, in your own words."></textarea>
+      <p class="hint">Optional.</p>
+    </div>
+    <p id="f-msg" class="addform-msg" role="alert" hidden></p>
+    <div class="addform-foot">
+      <p class="addform-note">Saved in this browser only. It is not sent anywhere,
+        nobody else sees it, and clearing the browser's site data removes it.</p>
+      <div class="addform-actions">
+        <button id="f-cancel" class="btn btn-quiet" type="button">Cancel</button>
+        <button id="f-save" class="btn" type="button">Save term</button>
+      </div>
+    </div>
+  </section>
+
+  <p id="local-msg" class="local-msg" role="status" aria-live="polite" hidden></p>
 
   <section id="results" class="results" aria-label="Results" tabindex="-1"></section>
 
@@ -100,7 +139,9 @@ try {
     <span class="tag tag-common">Common usage</span> and the plain-language
     search keywords are unofficial additions to make searching easier.
   </p>
-  <p>Runs entirely in your browser. Nothing you type leaves the device.</p>
+  <p>Runs entirely in your browser. Nothing you type leaves the device. Terms you
+    add yourself are stored by this browser alone, marked
+    <span class="tag tag-local">Added by you</span>, and never sent anywhere.</p>
   <p id="status" class="status"></p>
 </footer>
 

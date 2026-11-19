@@ -21,7 +21,17 @@
     srcList:    document.getElementById('src-list'),
     srcEmpty:   document.getElementById('src-empty'),
     srcAll:     document.getElementById('src-all'),
-    srcNone:    document.getElementById('src-none')
+    srcNone:    document.getElementById('src-none'),
+    addBtn:   document.getElementById('add-btn'),
+    addPanel: document.getElementById('add-panel'),
+    fTitle:   document.getElementById('add-title'),
+    fAbbr:    document.getElementById('f-abbr'),
+    fTerm:    document.getElementById('f-term'),
+    fDef:     document.getElementById('f-def'),
+    fMsg:     document.getElementById('f-msg'),
+    fSave:    document.getElementById('f-save'),
+    fCancel:  document.getElementById('f-cancel'),
+    localMsg: document.getElementById('local-msg')
   };
 
   /* ---------------- theme ---------------- */
@@ -178,7 +188,8 @@
     'AAP-15': 'Glossary of abbreviations',
     'AAP-06': 'Glossary of terms and definitions',
     'AJP': 'Any Allied Joint Publication',
-    'COMMON': 'Common usage, not an official source'
+    'COMMON': 'Common usage, not an official source',
+    'LOCAL': 'Added by you, held in this browser'
   };
 
   function buildSources() {
@@ -205,6 +216,10 @@
     });
     sources.push({ id: 'AJP', code: 'AJP', name: SRC_META.AJP,
                    count: anyAjp, group: 'glossary' });
+    if (counts.LOCAL) {
+      sources.push({ id: 'LOCAL', code: 'Yours', name: SRC_META.LOCAL,
+                     count: counts.LOCAL, group: 'glossary' });
+    }
     var codes = Object.keys(publications).sort(function (a, b) {
       return a.localeCompare(b, 'en', { numeric: true });
     });
@@ -212,7 +227,13 @@
       sources.push({ id: codes[c], code: codes[c], name: publications[codes[c]],
                      count: counts[codes[c]] || 0, group: 'ajp' });
     }
-    renderSources('');
+    var live = Object.create(null);
+    for (var s2 = 0; s2 < sources.length; s2++) live[sources[s2].id] = 1;
+    for (var sel in selected) {
+      if (!live[sel]) { delete selected[sel]; selectedCount--; }
+    }
+    summarise();
+    renderSources(els.srcSearch.value);
   }
 
   function renderSources(query) {
@@ -560,7 +581,8 @@
   }
 
   var SRC_LABEL = { 'AAP-15': 'AAP-15', 'AAP-06': 'AAP-06',
-                    'AJP': 'AJP lexicon', 'COMMON': 'Common usage' };
+                    'AJP': 'AJP lexicon', 'COMMON': 'Common usage',
+                    'LOCAL': 'Added by you' };
 
   function card(e, terms) {
     var box = el('article', 'entry');
@@ -599,7 +621,8 @@
     if (e.g) for (var g = 0; g < e.g.length; g++) {
       meta.appendChild(el('span', 'tag tag-flag', e.g[g]));
     }
-    meta.appendChild(el('span', 'tag tag-src' + (e.s === 'COMMON' ? ' tag-common' : ''),
+    meta.appendChild(el('span', 'tag tag-src' + (e.s === 'COMMON' ? ' tag-common' : '') +
+                        (e.s === 'LOCAL' ? ' tag-local' : ''),
                         SRC_LABEL[e.s] || e.s));
     if (e.p) {
       for (var pi = 0; pi < Math.min(e.p.length, 3); pi++) {
@@ -611,7 +634,21 @@
     }
     if (e.y) meta.appendChild(el('span', null, e.y));
     box.appendChild(meta);
+
+    if (e.s === 'LOCAL' && e.id) {
+      var acts = el('p', 'entry-actions');
+      acts.appendChild(actionBtn('Edit', function () { openForm(e); }));
+      acts.appendChild(actionBtn('Remove', function () { removeLocal(e.id); }));
+      box.appendChild(acts);
+    }
     return box;
+  }
+
+  function actionBtn(label, fn) {
+    var b = el('button', 'text-btn', label);
+    b.type = 'button';
+    b.addEventListener('click', fn);
+    return b;
   }
 
   /* A heading above a group of results, carrying how many it holds and how
@@ -666,9 +703,13 @@
     var within = selectedCount ? ' in the selected source' + (selectedCount > 1 ? 's' : '') : '';
     if (!list.length) {
       els.count.textContent = 'No match' + within + '.';
-      els.results.appendChild(el('p', 'empty', selectedCount
-        ? 'Nothing found in the selected sources. Widen the source filter, or try fewer words.'
-        : 'Nothing found. Try fewer words, or the other field.'));
+      var none = el('p', 'empty', selectedCount
+        ? 'Nothing found in the selected sources. Widen the source filter, or try fewer words. '
+        : 'Nothing found. Try fewer words, or the other field. ');
+      none.appendChild(actionBtn('Add it yourself', function () {
+        openForm({ a: qa, t: qt });
+      }));
+      els.results.appendChild(none);
     } else if (list.length > shown) {
       els.count.textContent = 'Showing ' + shown + ' of ' +
         list.length.toLocaleString('en-GB') + (within || ' matches');
@@ -696,6 +737,12 @@
   });
 
   document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && !els.addPanel.hidden &&
+        els.addPanel.contains(document.activeElement)) {
+      closeForm();
+      els.addBtn.focus();
+      return;
+    }
     if (ev.key === 'Escape' && !els.srcPanel.hidden) {
       openPanel(false);
       els.srcBtn.focus();
@@ -714,7 +761,286 @@
     }
   });
 
+  /* ---------------- terms you add yourself ---------------- */
+
+  /* These are typed in by whoever is using the app. They live in this
+     browser's localStorage and nowhere else: never uploaded, never shared,
+     and gone if the browser's site data is cleared. They are searched,
+     filtered and ranked exactly like the published terminology, and every
+     card carries an "Added by you" tag so the two are never confused. */
+
+  var LOCAL_KEY = 'nato-lookup.custom.v1';
+  var shipped = [];
+  var localEntries = [];
+  var editing = null;          // id of the entry being changed, or null
+  var undoRec = null;          // last removal, for the undo button
+
+  function newId() {
+    return 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  function today() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  }
+
+  function clean(rec) {
+    /* Anything may be in storage - another version of the app, a hand edit,
+       a half-written value. Keep only what the card knows how to show. */
+    if (!rec || typeof rec !== 'object') return null;
+    var t = typeof rec.t === 'string' ? rec.t.trim() : '';
+    if (!t) return null;
+    var out = { id: typeof rec.id === 'string' && rec.id ? rec.id : newId(),
+                a: typeof rec.a === 'string' && rec.a.trim() ? rec.a.trim() : null,
+                t: t, s: 'LOCAL' };
+    if (typeof rec.d === 'string' && rec.d.trim()) out.d = rec.d.trim();
+    if (typeof rec.y === 'string' && rec.y) out.y = rec.y;
+    return out;
+  }
+
+  function loadLocal() {
+    var raw = null;
+    try { raw = localStorage.getItem(LOCAL_KEY); } catch (e) { return []; }
+    if (!raw) return [];
+    var list;
+    try { list = JSON.parse(raw); } catch (e) { return []; }
+    if (!Array.isArray(list)) return [];
+    var out = [], seen = Object.create(null);
+    for (var i = 0; i < list.length; i++) {
+      var rec = clean(list[i]);
+      if (!rec || seen[rec.id]) continue;
+      seen[rec.id] = 1;
+      out.push(rec);
+    }
+    return out;
+  }
+
+  function saveLocal() {
+    try {
+      localStorage.setItem(LOCAL_KEY, JSON.stringify(localEntries));
+      return '';
+    } catch (e) {
+      return (e && /quota/i.test(e.name || '')) 
+        ? 'This browser has no storage space left, so the term was not saved.'
+        : 'This browser would not let the app store the term. Private browsing ' +
+          'and blocked site data both do that.';
+    }
+  }
+
+  /* The index is built once over a fixed array, so adding or removing an
+     entry means building it again from scratch. */
+  function reindex() {
+    pTerm = Object.create(null);
+    pBody = Object.create(null);
+    idf = Object.create(null);
+    stemMap = Object.create(null);
+    vocab = [];
+    foldedTerm = [];
+    foldedBody = [];
+    abbrKeys = [];
+    prominence = [];
+    termLen = [];
+    bodyLen = [];
+    avgBody = 1;
+    scores = new Float64Array(entries.length);
+    hits = new Int32Array(entries.length);
+    hitGen = new Int32Array(entries.length);
+    termScratch = new Float64Array(entries.length);
+    bodyScratch = new Float64Array(entries.length);
+    gen = 0;
+    buildIndex();
+    buildSources();
+  }
+
+  var builtOn = '';
+  var loadError = '';
+
+  function statusLine() {
+    if (loadError) {
+      els.status.textContent = loadError + (localEntries.length
+        ? ' Your own ' + (localEntries.length === 1 ? 'term is' : 'terms are') +
+          ' still here.'
+        : '');
+      return;
+    }
+    els.status.textContent = shipped.length.toLocaleString('en-GB') +
+      ' entries loaded · built ' + builtOn +
+      (localEntries.length
+        ? ' · ' + localEntries.length + (localEntries.length === 1 ? ' term' : ' terms') +
+          ' of your own, stored in this browser'
+        : '');
+  }
+
+  function applyLocal() {
+    entries = shipped.concat(localEntries);
+    reindex();
+    statusLine();
+  }
+
+  function note(text, undoable) {
+    els.localMsg.textContent = '';
+    if (!text) { els.localMsg.hidden = true; return; }
+    els.localMsg.appendChild(document.createTextNode(text));
+    if (undoable) els.localMsg.appendChild(actionBtn('Undo', undoRemove));
+    els.localMsg.hidden = false;
+  }
+
+  function formMsg(text) {
+    els.fMsg.textContent = text || '';
+    els.fMsg.hidden = !text;
+  }
+
+  function openForm(rec) {
+    editing = rec && rec.id ? rec.id : null;
+    els.fAbbr.value = (rec && rec.a) || '';
+    els.fTerm.value = (rec && rec.t) || '';
+    els.fDef.value = (rec && rec.d) || '';
+    els.fTitle.textContent = editing ? 'Edit your term' : 'Add a term';
+    els.fSave.textContent = editing ? 'Save changes' : 'Save term';
+    formMsg('');
+    els.addPanel.hidden = false;
+    els.addBtn.setAttribute('aria-expanded', 'true');
+    els.addPanel.scrollIntoView({ block: 'nearest' });
+    (editing ? els.fTerm : (els.fAbbr.value ? els.fTerm : els.fAbbr)).focus();
+  }
+
+  function closeForm() {
+    els.addPanel.hidden = true;
+    els.addBtn.setAttribute('aria-expanded', 'false');
+    editing = null;
+    formMsg('');
+  }
+
+  function findLocal(id) {
+    for (var i = 0; i < localEntries.length; i++) {
+      if (localEntries[i].id === id) return i;
+    }
+    return -1;
+  }
+
+  /* Show the entry that was just saved: a source filter that excludes it
+     would otherwise leave the person looking at an empty result list. */
+  function reveal(rec) {
+    if (selectedCount && !selected.LOCAL) {
+      selected = Object.create(null);
+      selectedCount = 0;
+      renderSources(els.srcSearch.value);
+      summarise();
+    }
+    var byAbbr = rec.a && normAbbr(rec.a);
+    els.abbr.value = byAbbr ? rec.a : '';
+    els.text.value = byAbbr ? '' : rec.t;
+    run();
+  }
+
+  function saveForm() {
+    var abbr = els.fAbbr.value.trim().replace(/\s+/g, ' ');
+    var term = els.fTerm.value.trim().replace(/\s+/g, ' ');
+    var def = els.fDef.value.trim().replace(/[ \t]+/g, ' ');
+    if (!term) {
+      formMsg('Give the term a name. The abbreviation and definition are optional.');
+      els.fTerm.focus();
+      return;
+    }
+    for (var i = 0; i < localEntries.length; i++) {
+      var other = localEntries[i];
+      if (other.id === editing) continue;
+      if (fold(other.t) === fold(term) && normAbbr(other.a || '') === normAbbr(abbr)) {
+        formMsg('You have added that one already.');
+        return;
+      }
+    }
+
+    var at = editing ? findLocal(editing) : -1;
+    if (editing && at === -1) { closeForm(); return; }
+    var before = at === -1 ? null : localEntries[at];
+    var rec = { id: editing || newId(), a: abbr || null, t: term, s: 'LOCAL',
+                y: before && before.y ? before.y : today() };
+    if (def) rec.d = def;
+
+    if (at === -1) localEntries.push(rec); else localEntries[at] = rec;
+    var err = saveLocal();
+    if (err) {                                  // put it back as it was
+      if (at === -1) localEntries.pop(); else localEntries[at] = before;
+      formMsg(err);
+      return;
+    }
+    undoRec = null;
+    applyLocal();
+    closeForm();
+    note(at === -1 ? 'Saved in this browser only.' : 'Your changes are saved in this browser.');
+    reveal(rec);
+  }
+
+  function removeLocal(id) {
+    var at = findLocal(id);
+    if (at === -1) return;
+    var gone = localEntries[at];
+    localEntries.splice(at, 1);
+    var err = saveLocal();
+    if (err) {
+      localEntries.splice(at, 0, gone);
+      note(err);
+      return;
+    }
+    undoRec = { rec: gone, at: at };
+    applyLocal();
+    if (editing === id) closeForm();
+    run();
+    note('Removed ' + (gone.a ? gone.a + ' — ' : '') + gone.t + '.', true);
+  }
+
+  function undoRemove() {
+    if (!undoRec) return;
+    localEntries.splice(Math.min(undoRec.at, localEntries.length), 0, undoRec.rec);
+    var err = saveLocal();
+    if (err) {
+      localEntries.splice(findLocal(undoRec.rec.id), 1);
+      note(err);
+      return;
+    }
+    var back = undoRec.rec;
+    undoRec = null;
+    applyLocal();
+    note('Put back.');
+    reveal(back);
+  }
+
+  /* Each tab holds the whole list in memory and saves it whole, so a tab that
+     never heard about another tab's new term would write over it. */
+  window.addEventListener('storage', function (ev) {
+    if (ev.key !== null && ev.key !== LOCAL_KEY) return;
+    localEntries = loadLocal();
+    undoRec = null;
+    if (editing && findLocal(editing) === -1) closeForm();
+    applyLocal();
+    run();
+  });
+
+  els.addBtn.addEventListener('click', function () {
+    if (els.addPanel.hidden) {
+      openForm({ a: els.abbr.value.trim(), t: els.text.value.trim() });
+    } else {
+      closeForm();
+      els.addBtn.focus();
+    }
+  });
+  els.fCancel.addEventListener('click', function () {
+    closeForm();
+    els.addBtn.focus();
+  });
+  els.fSave.addEventListener('click', saveForm);
+  els.addPanel.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' && ev.target.tagName !== 'TEXTAREA' && ev.target.tagName !== 'BUTTON') {
+      ev.preventDefault();
+      saveForm();
+    }
+  });
+
   /* ---------------- load ---------------- */
+
+  localEntries = loadLocal();
 
   fetch('data/terms.json')
     .then(function (r) {
@@ -722,21 +1048,17 @@
       return r.json();
     })
     .then(function (data) {
-      entries = data.entries;
+      shipped = data.entries;
       publications = data.publications || {};
-      scores = new Float64Array(entries.length);
-      hits = new Int32Array(entries.length);
-      hitGen = new Int32Array(entries.length);
-      termScratch = new Float64Array(entries.length);
-      bodyScratch = new Float64Array(entries.length);
-      buildIndex();
-      buildSources();
-      els.status.textContent = entries.length.toLocaleString('en-GB') + ' entries loaded · built ' + data.generated;
+      builtOn = data.generated;
+      applyLocal();
       run();
     })
     .catch(function (err) {
-      els.status.textContent = 'Could not load the terminology file (' + err.message + ').';
+      loadError = 'Could not load the terminology file (' + err.message + ').';
       els.count.textContent = '';
+      applyLocal();          /* whatever you added yourself still works */
+      run();
     });
 
   if ('serviceWorker' in navigator) {

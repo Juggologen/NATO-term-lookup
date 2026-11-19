@@ -182,7 +182,8 @@ body {
   margin-bottom: 6px;
 }
 
-.field > input {
+.field > input,
+.field > textarea {
   width: 100%;
   padding: 11px 12px;
   font: inherit;
@@ -194,10 +195,13 @@ body {
   appearance: none;
 }
 #q-abbr { font-family: var(--mono); letter-spacing: 0.04em; }
-.field > input::placeholder { color: var(--text-faint); }
+.field > input::placeholder,
+.field > textarea::placeholder { color: var(--text-faint); }
 .field > input:focus-visible,
+.field > textarea:focus-visible,
 .icon-btn:focus-visible,
-.text-btn:focus-visible {
+.text-btn:focus-visible,
+.btn:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 1px;
 }
@@ -476,6 +480,124 @@ mark {
   border-radius: 2px;
   padding: 0 1px;
 }
+
+/* ---------- terms you add yourself ---------- */
+
+/* An author `display` beats the hidden attribute's user-agent rule, so state
+   it once for everything that can be hidden. */
+[hidden] { display: none !important; }
+
+.bar-actions {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex: 0 0 auto;
+}
+
+.addform {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 15px;
+  margin-bottom: 14px;
+}
+
+.addform-title {
+  margin: 0 0 13px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.addform-grid { display: grid; gap: 13px; margin-bottom: 13px; }
+
+@media (min-width: 560px) {
+  .addform-grid { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 14px; }
+}
+
+.addform .field { margin-bottom: 13px; }
+.addform-grid .field { margin-bottom: 0; }
+#f-abbr { font-family: var(--mono); letter-spacing: 0.04em; }
+.addform textarea { resize: vertical; min-height: 68px; }
+
+.addform-msg {
+  margin: 0 0 12px;
+  padding: 8px 11px;
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 13px;
+}
+
+.addform-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.addform-note {
+  margin: 0;
+  flex: 1 1 260px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+.addform-actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.btn {
+  padding: 9px 15px;
+  font: inherit;
+  font-size: 14px;
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+.btn:hover { filter: brightness(1.08); }
+
+.btn-quiet {
+  color: var(--text-dim);
+  background: var(--surface);
+  border-color: var(--line);
+}
+.btn-quiet:hover { background: var(--surface-2); filter: none; }
+
+:root[data-theme="dark"] .btn { color: #10151b; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .btn { color: #10151b; }
+  :root:not([data-theme="light"]) .btn-quiet { color: var(--text-dim); }
+}
+:root[data-theme="dark"] .btn-quiet { color: var(--text-dim); }
+
+.local-msg {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 14px;
+  margin: 10px 0 0;
+}
+
+.tag-local { background: var(--accent-bg); border-color: transparent; color: var(--accent); }
 
 /* ---------- empty state, footer ---------- */
 
